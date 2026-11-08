@@ -78,7 +78,7 @@ body{height:100%;margin:0;background:radial-gradient(120% 90% at 50% 0%,var(--sk
       <button class="rb" id="btnSound" aria-label="الصوت" aria-pressed="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path id="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l6 6M22 9l-6 6" hidden/></svg>
       </button>
-      <button class="rb" id="btnCam" aria-label="رجّعي الكاميرا">
+      <button class="rb" id="btnCam" aria-label="أعيدي الكاميرا">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>
       </button>
     </div>
@@ -104,7 +104,7 @@ body{height:100%;margin:0;background:radial-gradient(120% 90% at 50% 0%,var(--sk
     <div class="kicker">وجدتِ الكنز</div>
     <h1>أحسنتِ يا روز!</h1>
     <p>جمعتِ كل النجوم وفتحتِ صندوق الكنز</p>
-    <button class="big" id="btnAgain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>العبي مرة ثانية</button>
+    <button class="big" id="btnAgain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>العبي مرةً أخرى</button>
   </section>
 </div>
 
@@ -524,15 +524,15 @@ function classify(m,c){
   return null;}
 const ITEMS={
  bed1:{say:'هل يوجد شيء مخبأ تحت السرير؟',anim:'shake',hint:'ابحثي عند السرير القريب من الخزانة الكبيرة'},
- bed2:{say:'سرير مريح! لنبحث بين الوسائد',anim:'shake',hint:'ابحثي عند السرير القريب من الشباك'},
+ bed2:{say:'سرير مريح! لنبحث بين الوسائد',anim:'shake',hint:'ابحثي عند السرير القريب من النافذة'},
  table:{say:'انظري جيداً، قد يكون الكنز قريباً!',anim:'hop',hint:'ابحثي عند الطاولة الصغيرة بين السريرين'},
  wardrobe3:{say:'لنبحث داخل الخزانة!',anim:'shake',hint:'ابحثي في الخزانة ذات القلوب الوردية'},
- wardrobe2:{say:'خزانة الملابس! هل هنا شيء؟',anim:'shake',hint:'ابحثي في الخزانة الصغيرة جنب الشباك'},
+ wardrobe2:{say:'خزانة الملابس! هل يوجد شيء هنا؟',anim:'shake',hint:'ابحثي في الخزانة الصغيرة بجانب النافذة'},
  bigWardrobe:{say:'خزانة كبيرة! لنبحث خلف الأبواب',anim:'shake',hint:'ابحثي في الخزانة البيضاء الكبيرة'},
  desk:{say:'ربما يوجد دليل على المكتب!',anim:'hop',hint:'ابحثي عند مكتبك الوردي'},
- teddy:{say:'مرحباً يا دبدوب!',anim:'hop',hint:'ابحثي عند الدبدوب الصغير على المكتب'},
- bins:{say:'صناديق الألعاب! واو!',anim:'hop',hint:'ابحثي في صناديق الألعاب فوق الخزانة'},
- basket:{say:'سلة صغيرة! هل الدليل هنا؟',anim:'hop',hint:'ابحثي في السلة جنب الباب الرمادي'},
+ teddy:{say:'مرحباً أيها الدبّ الصغير!',anim:'hop',hint:'ابحثي عند الدبّ الصغير على المكتب'},
+ bins:{say:'صناديق الألعاب! يا للروعة!',anim:'hop',hint:'ابحثي في صناديق الألعاب فوق الخزانة'},
+ basket:{say:'سلة صغيرة! هل الدليل هنا؟',anim:'hop',hint:'ابحثي في السلة بجانب الباب الرمادي'},
  door1:{say:'لا تخرجي! الكنز هنا في الغرفة',anim:'shake'},
  grayDoor:{say:'باب ينطوي مثل المروحة!',anim:'shake'},
  scale:{say:'كم طولك يا روز؟ أنتِ تكبرين!',anim:'none'},
@@ -540,7 +540,7 @@ const ITEMS={
  star:{say:'نجمة معلّقة جميلة!',anim:'sway'},
  flowers:{say:'ورود وردية على الحائط!',anim:'none'},
  rug:{say:'سجادة الورود الناعمة!',anim:'none'},
- pendant:{say:'اللمبة تضيء الغرفة!',anim:'sway'}
+ pendant:{say:'المصباح يضيء الغرفة!',anim:'sway'}
 };
 const POOL=['bed1','bed2','table','wardrobe3','wardrobe2','bigWardrobe','desk','teddy','bins','basket'];
 Object.keys(ITEMS).forEach(k=>{ITEMS[k].meshes=[];ITEMS[k].box=new THREE.Box3();});
@@ -820,7 +820,27 @@ let soundOn=true,arVoice=null,actx=null;
 function pickVoice(){const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];arVoice=vs.find(v=>/^ar[-_]?(SA|JO|AE|EG)?/i.test(v.lang)&&/female|laila|zeina|hoda|salma|amira/i.test(v.name))||vs.find(v=>/^ar/i.test(v.lang))||null;}
 if(window.speechSynthesis){pickVoice();speechSynthesis.addEventListener&&speechSynthesis.addEventListener('voiceschanged',pickVoice);}
 const bubble=document.getElementById('bubble'),sayEl=document.getElementById('say');
+/* recorded voice (ElevenLabs, voice "Sara", eleven_v4): one clip per line, played through Web Audio after the first tap.
+   Only one voice clip plays at a time; browser speech is kept as a fallback for a clip that failed to load. */
+const VOICE={"مرحباً روز! هيا نبحث عن ثلاث نجوم مخبأة في غرفتك. اضغطي على الأغراض!": "assets/audio/dialogue/dlg_start_welcome.mp3", "اضغطي على زر ابدئي المغامرة": "assets/audio/dialogue/dlg_intro_press_start.mp3", "لعبة جديدة! النجوم تخبّأت في أماكن جديدة": "assets/audio/dialogue/dlg_replay.mp3", "هل يوجد شيء مخبأ تحت السرير؟": "assets/audio/dialogue/dlg_item_bed1.mp3", "سرير مريح! لنبحث بين الوسائد": "assets/audio/dialogue/dlg_item_bed2.mp3", "انظري جيداً، قد يكون الكنز قريباً!": "assets/audio/dialogue/dlg_item_table.mp3", "لنبحث داخل الخزانة!": "assets/audio/dialogue/dlg_item_wardrobe3.mp3", "خزانة الملابس! هل يوجد شيء هنا؟": "assets/audio/dialogue/dlg_item_wardrobe2.mp3", "خزانة كبيرة! لنبحث خلف الأبواب": "assets/audio/dialogue/dlg_item_bigWardrobe.mp3", "ربما يوجد دليل على المكتب!": "assets/audio/dialogue/dlg_item_desk.mp3", "مرحباً أيها الدبّ الصغير!": "assets/audio/dialogue/dlg_item_teddy.mp3", "صناديق الألعاب! يا للروعة!": "assets/audio/dialogue/dlg_item_bins.mp3", "سلة صغيرة! هل الدليل هنا؟": "assets/audio/dialogue/dlg_item_basket.mp3", "لا تخرجي! الكنز هنا في الغرفة": "assets/audio/dialogue/dlg_item_door1.mp3", "باب ينطوي مثل المروحة!": "assets/audio/dialogue/dlg_item_grayDoor.mp3", "كم طولك يا روز؟ أنتِ تكبرين!": "assets/audio/dialogue/dlg_item_scale.mp3", "أرى السماء والأشجار!": "assets/audio/dialogue/dlg_item_window.mp3", "نجمة معلّقة جميلة!": "assets/audio/dialogue/dlg_item_star.mp3", "ورود وردية على الحائط!": "assets/audio/dialogue/dlg_item_flowers.mp3", "سجادة الورود الناعمة!": "assets/audio/dialogue/dlg_item_rug.mp3", "المصباح يضيء الغرفة!": "assets/audio/dialogue/dlg_item_pendant.mp3", "ابحثي عند السرير القريب من الخزانة الكبيرة": "assets/audio/dialogue/dlg_hint_bed1.mp3", "ابحثي عند السرير القريب من النافذة": "assets/audio/dialogue/dlg_hint_bed2.mp3", "ابحثي عند الطاولة الصغيرة بين السريرين": "assets/audio/dialogue/dlg_hint_table.mp3", "ابحثي في الخزانة ذات القلوب الوردية": "assets/audio/dialogue/dlg_hint_wardrobe3.mp3", "ابحثي في الخزانة الصغيرة بجانب النافذة": "assets/audio/dialogue/dlg_hint_wardrobe2.mp3", "ابحثي في الخزانة البيضاء الكبيرة": "assets/audio/dialogue/dlg_hint_bigWardrobe.mp3", "ابحثي عند مكتبك الوردي": "assets/audio/dialogue/dlg_hint_desk.mp3", "ابحثي عند الدبّ الصغير على المكتب": "assets/audio/dialogue/dlg_hint_teddy.mp3", "ابحثي في صناديق الألعاب فوق الخزانة": "assets/audio/dialogue/dlg_hint_bins.mp3", "ابحثي في السلة بجانب الباب الرمادي": "assets/audio/dialogue/dlg_hint_basket.mp3", "ليس هنا… جرّبي مكاناً آخر!": "assets/audio/reactions/rx_not_here_1.mp3", "اقتربتِ! ابحثي في مكانٍ آخر": "assets/audio/reactions/rx_not_here_2.mp3", "أنتِ رائعة! حاولي مرةً أخرى": "assets/audio/reactions/rx_not_here_3.mp3", "وجدنا النجمة هنا من قبل!": "assets/audio/reactions/rx_already_found.mp3", "وجدتِ النجمة الأولى! بقيت نجمتان": "assets/audio/reactions/rx_star1_left2.mp3", "وجدتِ النجمة الثانية! بقيت نجمة واحدة": "assets/audio/reactions/rx_star2_left1.mp3", "رائع! جمعتِ كل النجوم!": "assets/audio/celebrations/cel_all_stars.mp3", "انظري! صندوق الكنز يظهر": "assets/audio/celebrations/cel_chest_appears.mp3", "أحسنتِ يا روز! لقد وجدتِ الكنز!": "assets/audio/celebrations/cel_victory.mp3"};
+const vbuf={};let vsrc=null,vloading=null,vWant=null;
+function voiceCtx(){actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}
+const vjobs={};
+function loadClip(t){if(vjobs[t])return vjobs[t];let ctx;try{ctx=voiceCtx();}catch(e){return Promise.resolve();}
+  return vjobs[t]=fetch(VOICE[t]).then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer();})
+    .then(b=>new Promise((res,rej)=>ctx.decodeAudioData(b,res,rej))).then(buf=>{vbuf[t]=buf;}).catch(()=>{vbuf[t]=null;});}
+function loadVoices(){if(vloading)return vloading;return vloading=Promise.all(Object.keys(VOICE).map(loadClip));}
+function stopVoice(){if(vsrc){try{vsrc.stop();}catch(e){}vsrc=null;}if(window.speechSynthesis){try{speechSynthesis.cancel();}catch(e){}}}
+function playVoice(text){const b=vbuf[text];if(!b)return false;stopVoice();const ctx=voiceCtx();const src=ctx.createBufferSource();src.buffer=b;src.connect(ctx.destination);
+  src.onended=()=>{if(vsrc===src)vsrc=null;};src.start();vsrc=src;if(window.__voiceLog)window.__voiceLog.push(VOICE[text]);return true;}
+document.addEventListener('pointerdown',()=>{loadVoices();},{once:true,capture:true});
 function say(text){bubble.hidden=false;sayEl.textContent=text;bubble.classList.remove('pop');void bubble.offsetWidth;bubble.classList.add('pop');
+  vWant={text,t:performance.now()};
+  if(!soundOn)return;
+  if(playVoice(text))return;
+  if(text in VOICE&&vbuf[text]===undefined){stopVoice();const want=vWant;loadClip(text).then(()=>{loadVoices();if(vWant===want&&soundOn&&performance.now()-want.t<8000)playVoice(text)||speakFallback(text);});return;}
+  speakFallback(text);}
+function speakFallback(text){
   if(!soundOn||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=arVoice?arVoice.lang:'ar-SA';if(arVoice)u.voice=arVoice;u.rate=0.88;u.pitch=1.2;speechSynthesis.speak(u);}catch(e){}}
 function tones(list,type='triangle',vol=0.12){if(!soundOn)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();
   list.forEach(([f,at,dur])=>{const o=actx.createOscillator(),g=actx.createGain(),t0=actx.currentTime+at;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+0.02);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);o.connect(g).connect(actx.destination);o.start(t0);o.stop(t0+dur+0.05);});}catch(e){}}
@@ -850,7 +870,7 @@ function newGame(){clearLater();const p=POOL.slice();for(let i=p.length-1;i>0;i-
   clues=p.slice(0,3);found=[];renderTray();chest.visible=false;confetti.visible=false;chest.userData.open=0;lid.rotation.x=0;chest.userData.glow.intensity=0;chest.userData.halo.material.opacity=0;roseReset();}
 const nextClue=()=>clues.find(k=>!found.includes(k));
 function giveHint(){const k=nextClue();if(!k||state!=='play')return;say(ITEMS[k].hint);if(!roseTarget)roseDo('think');hintGlow.key=k;hintGlow.until=performance.now()+5000;lastAct=performance.now();}
-const CHEER=['ليس هنا… جرّبي مكاناً آخر!','قريب! ابحثي في مكان ثاني','أنتِ شاطرة! حاولي مرة ثانية'];let cheerI=0;
+const CHEER=['ليس هنا… جرّبي مكاناً آخر!','اقتربتِ! ابحثي في مكانٍ آخر','أنتِ رائعة! حاولي مرةً أخرى'];let cheerI=0;
 const COUNT=['وجدتِ النجمة الأولى!','وجدتِ النجمة الثانية!','وجدتِ النجمة الثالثة!'];
 
 function tapItem(k,point){const it=ITEMS[k];lastAct=performance.now();flash(k);SFX.tap();
@@ -862,7 +882,7 @@ function tapItem(k,point){const it=ITEMS[k];lastAct=performance.now();flash(k);S
   if(isClue&&!already){found.push(k);const delay=Math.max(1600,wt*1000+1500);
     later(()=>{const top=it.center.clone();top.y=Math.min(it.box.max.y+0.25,2.4);popStar(top);SFX.clue();renderTray();roseDo('discover',{look:top});
       showToast(COUNT[found.length-1]);
-      if(found.length<clues.length){say(COUNT[found.length-1]+' بقي '+(clues.length-found.length===1?'نجمة واحدة':'نجمتان'));later(giveHint,3200);}
+      if(found.length<clues.length){say(COUNT[found.length-1]+' بقيت '+(clues.length-found.length===1?'نجمة واحدة':'نجمتان'));later(giveHint,3200);}
       else{say('رائع! جمعتِ كل النجوم!');later(reveal,2300);}},delay);}
   else if(already&&isClue){later(()=>say('وجدنا النجمة هنا من قبل!'),1600);}
   else if(POOL.includes(k)){later(()=>{SFX.nope();say(CHEER[cheerI++%CHEER.length]);},Math.max(1700,wt*1000+1300));}}
@@ -889,13 +909,13 @@ canvas.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e
 let hoverT=0;canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||e.buttons)return;const n=performance.now();if(n-hoverT<80)return;hoverT=n;const h=pick(e);canvas.style.cursor=h&&h.object!==floor&&state!=='intro'?'pointer':'grab';});
 
 /* ---------- 11. HUD buttons ---------- */
-document.getElementById('btnStart').onclick=()=>{document.getElementById('intro').hidden=true;state='play';tones([[660,0,.15],[880,.1,.2]]);
+document.getElementById('btnStart').onclick=()=>{loadVoices();document.getElementById('intro').hidden=true;state='play';tones([[660,0,.15],[880,.1,.2]]);
   say('مرحباً روز! هيا نبحث عن ثلاث نجوم مخبأة في غرفتك. اضغطي على الأغراض!');roseDo('wave');lastAct=performance.now();renderTray();};
-document.getElementById('btnAgain').onclick=()=>{document.getElementById('outro').hidden=true;newGame();flyTo(startPose());state='play';say('لعبة جديدة! النجوم تخبأت في أماكن جديدة');lastAct=performance.now();};
+document.getElementById('btnAgain').onclick=()=>{document.getElementById('outro').hidden=true;newGame();flyTo(startPose());state='play';say('لعبة جديدة! النجوم تخبّأت في أماكن جديدة');lastAct=performance.now();};
 document.getElementById('btnHint').onclick=()=>{if(state==='play')giveHint();else if(state==='intro')say('اضغطي على زر ابدئي المغامرة');};
 document.getElementById('btnCam').onclick=()=>flyTo(state==='done'||state==='reveal'?chestPose():startPose());
 const bs=document.getElementById('btnSound');bs.onclick=()=>{soundOn=!soundOn;bs.setAttribute('aria-pressed',soundOn);bs.setAttribute('aria-label',soundOn?'الصوت يعمل':'الصوت مكتوم');
-  document.getElementById('waves').toggleAttribute('hidden',!soundOn);document.getElementById('mute').toggleAttribute('hidden',soundOn);if(!soundOn&&window.speechSynthesis)speechSynthesis.cancel();};
+  document.getElementById('waves').toggleAttribute('hidden',!soundOn);document.getElementById('mute').toggleAttribute('hidden',soundOn);if(!soundOn)stopVoice();};
 
 /* ---------- 12. loop ---------- */
 function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
@@ -913,6 +933,7 @@ function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;const t=now
   const pa=pg.attributes.position.array,ts=now*0.0004;for(let i=0;i<pa.length;i+=3){pa[i+1]=base0[i+1]+Math.sin(ts+i)*0.08;pa[i]=base0[i]+Math.cos(ts*0.7+i)*0.05;}pg.attributes.position.needsUpdate=true;
   renderer.render(scene,camera);requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 window.__game={ITEMS,tapItem,get state(){return state},get found(){return found},get clues(){return clues},start:()=>document.getElementById('btnStart').click()};
 })();
 </script>
