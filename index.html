@@ -557,7 +557,7 @@ Object.values(ITEMS).forEach(it=>{it.center=it.box.getCenter(new THREE.Vector3()
 function applyCut(o){const want=o.userData.cut?[cutPlane]:[];const m=o.material;if((m.clippingPlanes||[]).length!==want.length){m.clippingPlanes=want;m.needsUpdate=true;}}
 function setCut(group,on){group.traverse(o=>{if(!o.isMesh)return;o.userData.cut=on;applyCut(o);});}
 let cutKey='';
-function updateCuts(){const p=camera.position,s=[p.x<0.2,p.z<0.2,p.x>W-0.2,p.z>D-0.2],k=s.join();if(k===cutKey)return;cutKey=k;[1,2,3,4].forEach((g,i)=>setCut(G[g],s[i]));}
+function updateCuts(){const p=camera.position,s=[p.x<0.2,p.z<0.2,p.x>W-0.2,p.z>D-0.2],k=s.join();if(k===cutKey)return;cutKey=k;[1,2,3,4].forEach((g,i)=>setCut(G[g],s[i]));if(typeof syncWardCuts==='function')syncWardCuts();}
 
 /* ---------- 3. Rose — official character v3 (articulated 3D rig, ~1.05 m like a 4-year-old) ----------
    Rig: rose(root on floor) > body(air offset) > hips > [legL,legR > knee > ankle > shoe] , spine > chest > [shoulderL/R > elbow > wrist > hand], neck > head
@@ -673,25 +673,45 @@ const RIG={};
 
 /* ---------- character controller: locomotion + actions + expressions ---------- */
 const ROSE_HOME=new THREE.Vector3(1.45,0.025,2.7);
-/* walkable floor = union of convex rectangles measured from the real furniture boxes (read-only), shrunk by Rose's collider radius */
+/* walkable floor = occupancy grid (4 cm cells) built from the real furniture bounding boxes (read-only).
+   A cell is walkable only if Rose's collider circle (radius ROSE_R) centred there touches no obstacle and no wall.
+   Paths: A* over the grid, then straightened with line-of-sight checks, so every segment keeps the full clearance. */
 const ROSE_R=0.165; // half her shoulder width incl. sleeves (0.113 + 0.048), so the collider is no wider than the model
-const NAV=(function(){const b=k=>ITEMS[k].box,r=ROSE_R;
-  const open={x0:Math.max(b('wardrobe3').max.x,b('wardrobe2').max.x)+r,x1:Math.min(b('bed1').min.x,b('bed2').min.x)-r,z0:b('desk').max.z+r,z1:b('window').min.z-r};
-  const lane={x0:open.x1-0.06,x1:b('table').min.x-r,z0:b('bed1').max.z+r,z1:b('bed2').min.z-r}; // passage between the two beds, up to the bedside table
-  return {rects:[open,lane],clearance:b('bed2').min.z-b('bed1').max.z,lane};})();
-const inRect=(q,p,e=1e-4)=>p.x>=q.x0-e&&p.x<=q.x1+e&&p.z>=q.z0-e&&p.z<=q.z1+e;
-function navNearest(p){let best=null,bd=Infinity,bi=0;NAV.rects.forEach((q,i)=>{const x=Math.min(q.x1,Math.max(q.x0,p.x)),z=Math.min(q.z1,Math.max(q.z0,p.z)),d=(x-p.x)**2+(z-p.z)**2;if(d<bd){bd=d;best=new THREE.Vector3(x,0.025,z);bi=i;}});return {p:best,i:bi};}
-function navPath(from,to){const ti=navNearest(to);const fi=NAV.rects.findIndex(q=>inRect(q,from));const target=ti.p;
-  if(fi<0||inRect(NAV.rects[ti.i],from))return [target];
-  const A=NAV.rects[fi],B=NAV.rects[ti.i],o={x0:Math.max(A.x0,B.x0),x1:Math.min(A.x1,B.x1),z0:Math.max(A.z0,B.z0),z1:Math.min(A.z1,B.z1)};
-  const portal=new THREE.Vector3(Math.min(o.x1,Math.max(o.x0,(o.x0+o.x1)/2)),0.025,Math.min(o.z1,Math.max(o.z0,(o.z0+o.z1)/2)));return [portal,target];}
+const NAV_EXTRA=[]; // temporary obstacles, e.g. wardrobe doors while they stand open
+const NAV=(function(){const r=ROSE_R,cs=0.04,nx=Math.ceil(W/cs),nz=Math.ceil(D/cs),blocked=new Uint8Array(nx*nz);
+  const obs=['bed1','bed2','table','wardrobe3','wardrobe2','bigWardrobe','desk','basket','window','grayDoor'].map(k=>ITEMS[k].box);
+  const free=(x,z)=>{if(x<r||x>W-r||z<r||z>D-r)return false;for(const b of obs){const dx=Math.max(b.min.x-x,0,x-b.max.x),dz=Math.max(b.min.z-z,0,z-b.max.z);if(dx*dx+dz*dz<r*r)return false;}for(const b of NAV_EXTRA){const dx=Math.max(b.min.x-x,0,x-b.max.x),dz=Math.max(b.min.z-z,0,z-b.max.z);if(dx*dx+dz*dz<r*r)return false;}return true;};
+  const build=()=>{for(let j=0;j<nz;j++)for(let i=0;i<nx;i++)blocked[j*nx+i]=free((i+.5)*cs,(j+.5)*cs)?0:1;};build();
+  const B=k=>ITEMS[k].box;
+  return {cs,nx,nz,blocked,free,rebuild:build,
+    clearance:{bedsPassage:B('bed2').min.z-B('bed1').max.z,wardrobeBedPassage:B('bed1').min.z-B('bigWardrobe').max.z}};})();
+const cellOf=p=>[Math.min(NAV.nx-1,Math.max(0,Math.floor(p.x/NAV.cs))),Math.min(NAV.nz-1,Math.max(0,Math.floor(p.z/NAV.cs)))];
+const cellPt=(i,j)=>new THREE.Vector3((i+.5)*NAV.cs,0.025,(j+.5)*NAV.cs);
+function navNearest(p){const [ci,cj]=cellOf(p);if(!NAV.blocked[cj*NAV.nx+ci])return {p:new THREE.Vector3(p.x,0.025,p.z),c:[ci,cj]};
+  let best=null,bd=Infinity;for(let j=0;j<NAV.nz;j++)for(let i=0;i<NAV.nx;i++){if(NAV.blocked[j*NAV.nx+i])continue;const q=cellPt(i,j),d=(q.x-p.x)**2+(q.z-p.z)**2;if(d<bd){bd=d;best={p:q,c:[i,j]};}}return best;}
+function navLOS(a,b){const L=Math.hypot(b.x-a.x,b.z-a.z),n=Math.max(1,Math.ceil(L/(NAV.cs*0.5)));for(let k=0;k<=n;k++){const t=k/n;if(!NAV.free(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t))return false;}return true;}
+function navPath(from,to){const goal=navNearest(to);let start=navNearest(from);const s0=NAV.free(from.x,from.z)?new THREE.Vector3(from.x,0.025,from.z):start.p;
+  if(navLOS(s0,goal.p))return [goal.p];
+  const {nx,nz,blocked}=NAV,N=nx*nz,g=new Float32Array(N).fill(Infinity),came=new Int32Array(N).fill(-1),closed=new Uint8Array(N),open=[];
+  const si=start.c[1]*nx+start.c[0],gi=goal.c[1]*nx+goal.c[0],gx=goal.c[0],gz=goal.c[1];
+  const h=(i,j)=>{const dx=Math.abs(i-gx),dz=Math.abs(j-gz);return Math.max(dx,dz)+0.4142*Math.min(dx,dz);};
+  g[si]=0;open.push([h(start.c[0],start.c[1]),si]);
+  while(open.length){let bi=0;for(let k=1;k<open.length;k++)if(open[k][0]<open[bi][0])bi=k;const cur=open.splice(bi,1)[0][1];if(cur===gi)break;if(closed[cur])continue;closed[cur]=1;
+    const ci=cur%nx,cj=(cur-ci)/nx;
+    for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=ci+di,nj=cj+dj;if(ni<0||nj<0||ni>=nx||nj>=nz)continue;const n=nj*nx+ni;if(blocked[n]||closed[n])continue;
+      if(di&&dj&&(blocked[cj*nx+ni]||blocked[nj*nx+ci]))continue;const ng=g[cur]+(di&&dj?1.4142:1);if(ng<g[n]){g[n]=ng;came[n]=cur;open.push([ng+h(ni,nj),n]);}}}
+  if(came[gi]<0&&gi!==si)return [goal.p]; // unreachable (should not happen): fall back to the old straight behaviour
+  const cells=[];for(let c=gi;c>=0;c=came[c]){cells.push(c);if(c===si)break;}cells.reverse();
+  const pts=cells.map(c=>cellPt(c%nx,(c-c%nx)/nx));pts[pts.length-1]=goal.p;
+  const out=[];let anchor=s0,k=0;while(k<pts.length-1){let far=k+1;for(let m=pts.length-1;m>k;m--){if(navLOS(anchor,pts[m])){far=m;break;}}out.push(pts[far]);anchor=pts[far];k=far;}
+  return out.length?out:[goal.p];}
 const clampFloor=v=>navNearest(v).p;
 let rosePath=[];
 let roseTarget=null,roseLook=null,lookUntil=0,roseArrive=null,roseSpeed=0.9;
 let act={name:'idle',t:0,dur:Infinity,look:null};
-function roseDo(name,o={}){if(roseTarget&&!['idle','wave','think'].includes(name)){roseArrive={name,o};return;}act={name,t:0,dur:o.dur!=null?o.dur:({search:1.5,discover:1.8,celebrate:4,wave:1.6,think:1.9,open:1.6,jump:0.75}[name]||Infinity),look:o.look?o.look.clone():null};if(act.look){roseLook=act.look;lookUntil=performance.now()+act.dur*1000+800;}}
+function roseDo(name,o={}){if(roseTarget&&!['idle','wave','think'].includes(name)){roseArrive={name,o,fn:roseArrive?roseArrive.fn:null};return;}act={name,t:0,dur:o.dur!=null?o.dur:({search:1.5,reach:0.8,discover:1.8,celebrate:4,wave:1.6,think:1.9,open:1.6,jump:0.75}[name]||Infinity),look:o.look?o.look.clone():null};if(act.look){roseLook=act.look;lookUntil=performance.now()+act.dur*1000+800;}}
 function roseReset(){rose.position.copy(ROSE_HOME);rose.rotation.y=Math.atan2(1,1);roseTarget=null;rosePath=[];roseLook=null;roseArrive=null;roseDo('idle');}
-function walkTo(p,look,arrive){rosePath=navPath(rose.position,p);roseTarget=rosePath[rosePath.length-1];roseLook=look?look.clone():null;roseArrive=arrive?{name:arrive,o:{look:roseLook||undefined}}:null;if(act.name==='kneel'||act.name==='open'||act.name==='search')roseDo('idle');
+function walkTo(p,look,arrive,fn){rosePath=navPath(rose.position,p);roseTarget=rosePath[rosePath.length-1];roseLook=look?look.clone():null;roseArrive=(arrive||fn)?{name:arrive||'idle',o:{look:roseLook||undefined},fn:fn||null}:null;if(act.name==='kneel'||act.name==='open'||act.name==='search')roseDo('idle');
   let d=0,q=rose.position;rosePath.forEach(w=>{d+=q.distanceTo(w);q=w;});roseSpeed=d>1.3?1.8:0.9;return d>0.03?d/roseSpeed+0.45:0;}
 function turnTo(a,k){let d=a-rose.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));rose.rotation.y+=d*Math.min(1,k);}
 roseReset();
@@ -719,9 +739,9 @@ function updateRose(dt,t){
   act.t+=dt;if(act.t>act.dur)roseDo(state==='done'?'proud':'idle');
   // locomotion
   let moving=false;
-  if(roseTarget&&rosePath.length>1&&rose.position.distanceTo(rosePath[0])<0.05)rosePath.shift(); // passed a portal waypoint
+  if(roseTarget&&rosePath.length>1&&rose.position.distanceTo(rosePath[0])<0.012)rosePath.shift(); // reach each waypoint exactly so corners are not cut // passed a portal waypoint
   if(roseTarget){const wp=rosePath[0]||roseTarget,last=rosePath.length<=1;_v.subVectors(wp,rose.position);_v.y=0;const L=_v.length();
-    if(last&&L<0.025){roseTarget=null;rosePath=[];lookUntil=performance.now()+(roseLook?1600:0);if(roseArrive){const q=roseArrive;roseArrive=null;roseDo(q.name,q.o);}}
+    if(last&&L<0.025){roseTarget=null;rosePath=[];lookUntil=performance.now()+(roseLook?1600:0);if(roseArrive){const q=roseArrive;roseArrive=null;if(q.fn)q.fn();roseDo(q.name,q.o);}}
     else{moving=true;const sp=roseSpeed*(last?Math.min(1,0.35+L*1.5):1);const step=Math.min(L,sp*dt);rose.position.addScaledVector(_v.normalize(),step);turnTo(Math.atan2(_v.x,_v.z),dt*9);
       phase+=dt*Math.PI*sp/(roseSpeed>1.2?0.42:0.27);}}
   if(!moving){const lk=(roseLook&&performance.now()<lookUntil)?roseLook:camera.position;_v.subVectors(lk,rose.position);turnTo(Math.atan2(_v.x,_v.z),dt*(act.name==='idle'||act.name==='proud'?3:6));}
@@ -730,7 +750,11 @@ function updateRose(dt,t){
   else switch(a.name){
     case'wave':P.shRZ=-2.55+Math.sin(t*9)*0.28;P.shRX=-0.15;P.elR=-0.35;P.hdZ=0.08;e='happy';break;
     case'search':{P.hipY=-0.035;P.knL=P.knR=0.35;P.lgLX=P.lgRX=-0.22;P.anL=P.anR=0.15;P.spX=0.32;P.hdX=0.22;P.hdY=Math.sin(a.t*2.6)*0.38;
-      P.shRX=-1.35;P.shRZ=-0.15;P.elR=-0.7;P.shLX=-0.55;P.shLZ=0.25;P.elL=-0.6;e='curious';break;}
+      P.shRX=-1.35;P.shRZ=-0.15;P.elR=-0.7;P.shLX=-0.55;P.shLZ=0.25;P.elL=-0.6;e='curious';
+      const ly=a.look?a.look.y:0.8;if(ly>1.6){P.hipY=0;P.knL=P.knR=0.05;P.lgLX=P.lgRX=0;P.anL=P.anR=0;P.spX=-0.05;P.hdX=-0.5;P.shRX=-2.6;P.elR=-0.25;} // look up at a high shelf
+      else if(ly<0.55){P.hipY=-0.13;P.knL=P.knR=0.95;P.lgLX=P.lgRX=-0.65;P.anL=P.anR=0.45;P.spX=0.42;P.hdX=0.5;} // crouch for a low shelf
+      break;}
+    case'reach':P.shLX=P.shRX=-1.35;P.elL=P.elR=-0.25;P.spX=0.08;P.hdX=-0.05;e='curious';break;
     case'discover':{if(a.t<0.55){P.shLX=P.shRX=-1.0;P.shLZ=0.55;P.shRZ=-0.55;P.elL=P.elR=-2.25;P.spX=-0.08;P.hdX=-0.12;e='surprised';}
       else{air=jumpCurve(Math.min(1,(a.t-0.55)/0.75));P.shLZ=2.5;P.shRZ=-2.5;P.elL=P.elR=-0.25;P.hdX=-0.15;e='excited';}break;}
     case'jump':air=jumpCurve(u);P.shLZ=1.2;P.shRZ=-1.2;e='excited';break;
@@ -807,11 +831,11 @@ function updateFx(dt,now){
   Object.keys(ITEMS).forEach(k=>{const it=ITEMS[k],f=fx[k];let glow=0,col=0xff9ec2;
     if(f){f.t+=dt;const k1=f.t/1.3;glow=Math.max(0,Math.sin(Math.min(1,k1)*Math.PI))*0.55;
       const decay=Math.max(0,1-k1);
-      it.meshes.forEach(m=>{const p0=m.userData.p0;m.position.copy(p0);
+      it.meshes.forEach(m=>{if(m.userData.door)return;const p0=m.userData.p0;m.position.copy(p0);
         if(it.anim==='hop')m.position.y=p0.y+Math.abs(Math.sin(f.t*10))*0.05*decay;
         else if(it.anim==='shake'){m.position.x=p0.x+Math.sin(f.t*38)*0.012*decay;m.position.z=p0.z+Math.cos(f.t*31)*0.008*decay;}
         else if(it.anim==='sway'){m.position.x=p0.x+Math.sin(f.t*9+p0.x*8)*0.025*decay;}});
-      if(k1>=1){delete fx[k];it.meshes.forEach(m=>m.position.copy(m.userData.p0));}}
+      if(k1>=1){delete fx[k];it.meshes.forEach(m=>{if(!m.userData.door)m.position.copy(m.userData.p0);});}}
     if(hintGlow.key===k&&now<hintGlow.until){glow=Math.max(glow,(0.5+0.5*Math.sin(now*0.008))*0.6);col=0xffd36b;}
     if(glow>0||it._g){setEmissive(it,col,glow);it._g=glow>0;}});}
 
@@ -822,14 +846,15 @@ if(window.speechSynthesis){pickVoice();speechSynthesis.addEventListener&&speechS
 const bubble=document.getElementById('bubble'),sayEl=document.getElementById('say');
 /* recorded voice (ElevenLabs, voice "Sara", eleven_v4): one clip per line, played through Web Audio after the first tap.
    Only one voice clip plays at a time; browser speech is kept as a fallback for a clip that failed to load. */
-const VOICE={"مرحباً روز! هيا نبحث عن ثلاث نجوم مخبأة في غرفتك. اضغطي على الأغراض!": "assets/audio/dialogue/dlg_start_welcome.mp3", "اضغطي على زر ابدئي المغامرة": "assets/audio/dialogue/dlg_intro_press_start.mp3", "لعبة جديدة! النجوم تخبّأت في أماكن جديدة": "assets/audio/dialogue/dlg_replay.mp3", "هل يوجد شيء مخبأ تحت السرير؟": "assets/audio/dialogue/dlg_item_bed1.mp3", "سرير مريح! لنبحث بين الوسائد": "assets/audio/dialogue/dlg_item_bed2.mp3", "انظري جيداً، قد يكون الكنز قريباً!": "assets/audio/dialogue/dlg_item_table.mp3", "لنبحث داخل الخزانة!": "assets/audio/dialogue/dlg_item_wardrobe3.mp3", "خزانة الملابس! هل يوجد شيء هنا؟": "assets/audio/dialogue/dlg_item_wardrobe2.mp3", "خزانة كبيرة! لنبحث خلف الأبواب": "assets/audio/dialogue/dlg_item_bigWardrobe.mp3", "ربما يوجد دليل على المكتب!": "assets/audio/dialogue/dlg_item_desk.mp3", "مرحباً أيها الدبّ الصغير!": "assets/audio/dialogue/dlg_item_teddy.mp3", "صناديق الألعاب! يا للروعة!": "assets/audio/dialogue/dlg_item_bins.mp3", "سلة صغيرة! هل الدليل هنا؟": "assets/audio/dialogue/dlg_item_basket.mp3", "لا تخرجي! الكنز هنا في الغرفة": "assets/audio/dialogue/dlg_item_door1.mp3", "باب ينطوي مثل المروحة!": "assets/audio/dialogue/dlg_item_grayDoor.mp3", "كم طولك يا روز؟ أنتِ تكبرين!": "assets/audio/dialogue/dlg_item_scale.mp3", "أرى السماء والأشجار!": "assets/audio/dialogue/dlg_item_window.mp3", "نجمة معلّقة جميلة!": "assets/audio/dialogue/dlg_item_star.mp3", "ورود وردية على الحائط!": "assets/audio/dialogue/dlg_item_flowers.mp3", "سجادة الورود الناعمة!": "assets/audio/dialogue/dlg_item_rug.mp3", "المصباح يضيء الغرفة!": "assets/audio/dialogue/dlg_item_pendant.mp3", "ابحثي عند السرير القريب من الخزانة الكبيرة": "assets/audio/dialogue/dlg_hint_bed1.mp3", "ابحثي عند السرير القريب من النافذة": "assets/audio/dialogue/dlg_hint_bed2.mp3", "ابحثي عند الطاولة الصغيرة بين السريرين": "assets/audio/dialogue/dlg_hint_table.mp3", "ابحثي في الخزانة ذات القلوب الوردية": "assets/audio/dialogue/dlg_hint_wardrobe3.mp3", "ابحثي في الخزانة الصغيرة بجانب النافذة": "assets/audio/dialogue/dlg_hint_wardrobe2.mp3", "ابحثي في الخزانة البيضاء الكبيرة": "assets/audio/dialogue/dlg_hint_bigWardrobe.mp3", "ابحثي عند مكتبك الوردي": "assets/audio/dialogue/dlg_hint_desk.mp3", "ابحثي عند الدبّ الصغير على المكتب": "assets/audio/dialogue/dlg_hint_teddy.mp3", "ابحثي في صناديق الألعاب فوق الخزانة": "assets/audio/dialogue/dlg_hint_bins.mp3", "ابحثي في السلة بجانب الباب الرمادي": "assets/audio/dialogue/dlg_hint_basket.mp3", "ليس هنا… جرّبي مكاناً آخر!": "assets/audio/reactions/rx_not_here_1.mp3", "اقتربتِ! ابحثي في مكانٍ آخر": "assets/audio/reactions/rx_not_here_2.mp3", "أنتِ رائعة! حاولي مرةً أخرى": "assets/audio/reactions/rx_not_here_3.mp3", "وجدنا النجمة هنا من قبل!": "assets/audio/reactions/rx_already_found.mp3", "وجدتِ النجمة الأولى! بقيت نجمتان": "assets/audio/reactions/rx_star1_left2.mp3", "وجدتِ النجمة الثانية! بقيت نجمة واحدة": "assets/audio/reactions/rx_star2_left1.mp3", "رائع! جمعتِ كل النجوم!": "assets/audio/celebrations/cel_all_stars.mp3", "انظري! صندوق الكنز يظهر": "assets/audio/celebrations/cel_chest_appears.mp3", "أحسنتِ يا روز! لقد وجدتِ الكنز!": "assets/audio/celebrations/cel_victory.mp3"};
+const VOICE={"الباب مغلق، لنفتحه أولاً!":"assets/audio/dialogue/dlg_door_closed.mp3","لنبحث في الرف العلوي!":"assets/audio/dialogue/dlg_spot_top_shelf.mp3","لنبحث في الرف الأوسط!":"assets/audio/dialogue/dlg_spot_middle_shelf.mp3","لنبحث في الرف السفلي!":"assets/audio/dialogue/dlg_spot_bottom_shelf.mp3","لنبحث بين الملابس المعلّقة!":"assets/audio/dialogue/dlg_spot_hanging.mp3","لنبحث في الأدراج!":"assets/audio/dialogue/dlg_spot_drawers.mp3","مرحباً روز! هيا نبحث عن ثلاث نجوم مخبأة في غرفتك. اضغطي على الأغراض!": "assets/audio/dialogue/dlg_start_welcome.mp3", "اضغطي على زر ابدئي المغامرة": "assets/audio/dialogue/dlg_intro_press_start.mp3", "لعبة جديدة! النجوم تخبّأت في أماكن جديدة": "assets/audio/dialogue/dlg_replay.mp3", "هل يوجد شيء مخبأ تحت السرير؟": "assets/audio/dialogue/dlg_item_bed1.mp3", "سرير مريح! لنبحث بين الوسائد": "assets/audio/dialogue/dlg_item_bed2.mp3", "انظري جيداً، قد يكون الكنز قريباً!": "assets/audio/dialogue/dlg_item_table.mp3", "لنبحث داخل الخزانة!": "assets/audio/dialogue/dlg_item_wardrobe3.mp3", "خزانة الملابس! هل يوجد شيء هنا؟": "assets/audio/dialogue/dlg_item_wardrobe2.mp3", "خزانة كبيرة! لنبحث خلف الأبواب": "assets/audio/dialogue/dlg_item_bigWardrobe.mp3", "ربما يوجد دليل على المكتب!": "assets/audio/dialogue/dlg_item_desk.mp3", "مرحباً أيها الدبّ الصغير!": "assets/audio/dialogue/dlg_item_teddy.mp3", "صناديق الألعاب! يا للروعة!": "assets/audio/dialogue/dlg_item_bins.mp3", "سلة صغيرة! هل الدليل هنا؟": "assets/audio/dialogue/dlg_item_basket.mp3", "لا تخرجي! الكنز هنا في الغرفة": "assets/audio/dialogue/dlg_item_door1.mp3", "باب ينطوي مثل المروحة!": "assets/audio/dialogue/dlg_item_grayDoor.mp3", "كم طولك يا روز؟ أنتِ تكبرين!": "assets/audio/dialogue/dlg_item_scale.mp3", "أرى السماء والأشجار!": "assets/audio/dialogue/dlg_item_window.mp3", "نجمة معلّقة جميلة!": "assets/audio/dialogue/dlg_item_star.mp3", "ورود وردية على الحائط!": "assets/audio/dialogue/dlg_item_flowers.mp3", "سجادة الورود الناعمة!": "assets/audio/dialogue/dlg_item_rug.mp3", "المصباح يضيء الغرفة!": "assets/audio/dialogue/dlg_item_pendant.mp3", "ابحثي عند السرير القريب من الخزانة الكبيرة": "assets/audio/dialogue/dlg_hint_bed1.mp3", "ابحثي عند السرير القريب من النافذة": "assets/audio/dialogue/dlg_hint_bed2.mp3", "ابحثي عند الطاولة الصغيرة بين السريرين": "assets/audio/dialogue/dlg_hint_table.mp3", "ابحثي في الخزانة ذات القلوب الوردية": "assets/audio/dialogue/dlg_hint_wardrobe3.mp3", "ابحثي في الخزانة الصغيرة بجانب النافذة": "assets/audio/dialogue/dlg_hint_wardrobe2.mp3", "ابحثي في الخزانة البيضاء الكبيرة": "assets/audio/dialogue/dlg_hint_bigWardrobe.mp3", "ابحثي عند مكتبك الوردي": "assets/audio/dialogue/dlg_hint_desk.mp3", "ابحثي عند الدبّ الصغير على المكتب": "assets/audio/dialogue/dlg_hint_teddy.mp3", "ابحثي في صناديق الألعاب فوق الخزانة": "assets/audio/dialogue/dlg_hint_bins.mp3", "ابحثي في السلة بجانب الباب الرمادي": "assets/audio/dialogue/dlg_hint_basket.mp3", "ليس هنا… جرّبي مكاناً آخر!": "assets/audio/reactions/rx_not_here_1.mp3", "اقتربتِ! ابحثي في مكانٍ آخر": "assets/audio/reactions/rx_not_here_2.mp3", "أنتِ رائعة! حاولي مرةً أخرى": "assets/audio/reactions/rx_not_here_3.mp3", "وجدنا النجمة هنا من قبل!": "assets/audio/reactions/rx_already_found.mp3", "وجدتِ النجمة الأولى! بقيت نجمتان": "assets/audio/reactions/rx_star1_left2.mp3", "وجدتِ النجمة الثانية! بقيت نجمة واحدة": "assets/audio/reactions/rx_star2_left1.mp3", "رائع! جمعتِ كل النجوم!": "assets/audio/celebrations/cel_all_stars.mp3", "انظري! صندوق الكنز يظهر": "assets/audio/celebrations/cel_chest_appears.mp3", "أحسنتِ يا روز! لقد وجدتِ الكنز!": "assets/audio/celebrations/cel_victory.mp3"};
+const VOICE_PENDING=new Set(['لنبحث في الأدراج!']); // recording not delivered yet: show the text, stay silent (no robot voice)
 const vbuf={};let vsrc=null,vloading=null,vWant=null;
 function voiceCtx(){actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}
 const vjobs={};
 function loadClip(t){if(vjobs[t])return vjobs[t];let ctx;try{ctx=voiceCtx();}catch(e){return Promise.resolve();}
   return vjobs[t]=fetch(VOICE[t]).then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer();})
     .then(b=>new Promise((res,rej)=>ctx.decodeAudioData(b,res,rej))).then(buf=>{vbuf[t]=buf;}).catch(()=>{vbuf[t]=null;});}
-function loadVoices(){if(vloading)return vloading;return vloading=Promise.all(Object.keys(VOICE).map(loadClip));}
+function loadVoices(){if(vloading)return vloading;return vloading=Promise.all(Object.keys(VOICE).filter(t=>!VOICE_PENDING.has(t)).map(loadClip));}
 function stopVoice(){if(vsrc){try{vsrc.stop();}catch(e){}vsrc=null;}if(window.speechSynthesis){try{speechSynthesis.cancel();}catch(e){}}}
 function playVoice(text){const b=vbuf[text];if(!b)return false;stopVoice();const ctx=voiceCtx();const src=ctx.createBufferSource();src.buffer=b;src.connect(ctx.destination);
   src.onended=()=>{if(vsrc===src)vsrc=null;};src.start();vsrc=src;if(window.__voiceLog)window.__voiceLog.push(VOICE[text]);return true;}
@@ -837,10 +862,11 @@ document.addEventListener('pointerdown',()=>{loadVoices();},{once:true,capture:t
 function say(text){bubble.hidden=false;sayEl.textContent=text;bubble.classList.remove('pop');void bubble.offsetWidth;bubble.classList.add('pop');
   vWant={text,t:performance.now()};
   if(!soundOn)return;
+  if(VOICE_PENDING.has(text)){stopVoice();return;}
   if(playVoice(text))return;
   if(text in VOICE&&vbuf[text]===undefined){stopVoice();const want=vWant;loadClip(text).then(()=>{loadVoices();if(vWant===want&&soundOn&&performance.now()-want.t<8000)playVoice(text)||speakFallback(text);});return;}
   speakFallback(text);}
-function speakFallback(text){
+function speakFallback(text){if(VOICE_PENDING.has(text))return;
   if(!soundOn||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=arVoice?arVoice.lang:'ar-SA';if(arVoice)u.voice=arVoice;u.rate=0.88;u.pitch=1.2;speechSynthesis.speak(u);}catch(e){}}
 function tones(list,type='triangle',vol=0.12){if(!soundOn)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();
   list.forEach(([f,at,dur])=>{const o=actx.createOscillator(),g=actx.createGain(),t0=actx.currentTime+at;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+0.02);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);o.connect(g).connect(actx.destination);o.start(t0);o.stop(t0+dur+0.05);});}catch(e){}}
@@ -867,23 +893,23 @@ function later(fn,ms){const id=setTimeout(fn,ms);pending.push(id);}
 function clearLater(){pending.forEach(clearTimeout);pending=[];}
 function renderTray(){tray.innerHTML=clues.map((_,i)=>`<div class="slot${i<found.length?' on':''}">${STAR_SVG}</div>`).join('');}
 function newGame(){clearLater();const p=POOL.slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]];}
-  clues=p.slice(0,3);found=[];renderTray();chest.visible=false;confetti.visible=false;chest.userData.open=0;lid.rotation.x=0;chest.userData.glow.intensity=0;chest.userData.halo.material.opacity=0;roseReset();}
+  clues=p.slice(0,3);found=[];renderTray();resetWardrobes();chest.visible=false;confetti.visible=false;chest.userData.open=0;lid.rotation.x=0;chest.userData.glow.intensity=0;chest.userData.halo.material.opacity=0;roseReset();}
 const nextClue=()=>clues.find(k=>!found.includes(k));
 function giveHint(){const k=nextClue();if(!k||state!=='play')return;say(ITEMS[k].hint);if(!roseTarget)roseDo('think');hintGlow.key=k;hintGlow.until=performance.now()+5000;lastAct=performance.now();}
 const CHEER=['ليس هنا… جرّبي مكاناً آخر!','اقتربتِ! ابحثي في مكانٍ آخر','أنتِ رائعة! حاولي مرةً أخرى'];let cheerI=0;
 const COUNT=['وجدتِ النجمة الأولى!','وجدتِ النجمة الثانية!','وجدتِ النجمة الثالثة!'];
 
-function tapItem(k,point){const it=ITEMS[k];lastAct=performance.now();flash(k);SFX.tap();
+function awardStar(top,delay){later(()=>{popStar(top);SFX.clue();renderTray();roseDo('discover',{look:top});
+      showToast(COUNT[found.length-1]);
+      if(found.length<clues.length){say(COUNT[found.length-1]+' بقيت '+(clues.length-found.length===1?'نجمة واحدة':'نجمتان'));later(giveHint,3200);}
+      else{say('رائع! جمعتِ كل النجوم!');later(reveal,2300);}},delay);}
+function tapItem(k,point,obj){if(WARD[k]&&state==='play'){wardrobeTap(k,obj);return;}const it=ITEMS[k];lastAct=performance.now();flash(k);SFX.tap();
   const look=it.center.clone();const wt=walkTo(k==='rug'?point:look,look,(state==='play'&&POOL.includes(k))?'search':null);
   if(state!=='play'){say(it.say);return;}
   if(hintGlow.key===k)hintGlow.until=0;
   say(it.say);
   const isClue=clues.includes(k),already=found.includes(k);
-  if(isClue&&!already){found.push(k);const delay=Math.max(1600,wt*1000+1500);
-    later(()=>{const top=it.center.clone();top.y=Math.min(it.box.max.y+0.25,2.4);popStar(top);SFX.clue();renderTray();roseDo('discover',{look:top});
-      showToast(COUNT[found.length-1]);
-      if(found.length<clues.length){say(COUNT[found.length-1]+' بقيت '+(clues.length-found.length===1?'نجمة واحدة':'نجمتان'));later(giveHint,3200);}
-      else{say('رائع! جمعتِ كل النجوم!');later(reveal,2300);}},delay);}
+  if(isClue&&!already){found.push(k);const top=it.center.clone();top.y=Math.min(it.box.max.y+0.25,2.4);awardStar(top,Math.max(1600,wt*1000+1500));}
   else if(already&&isClue){later(()=>say('وجدنا النجمة هنا من قبل!'),1600);}
   else if(POOL.includes(k)){later(()=>{SFX.nope();say(CHEER[cheerI++%CHEER.length]);},Math.max(1700,wt*1000+1300));}}
 
@@ -897,6 +923,131 @@ function updateChest(dt){if(!chest.visible)return;const u=chest.userData;
   if(u.open>0){u.open=Math.min(1,u.open+dt/1.1);const e=ease(u.open);lid.rotation.x=-1.9*e;u.glow.intensity=1.6*e;u.halo.material.opacity=0.7*e;}
   u.halo.material.rotation+=dt*0.5;}
 
+/* ---------- 9b. interactive wardrobes ----------
+   The approved model is untouched at rest: original door meshes keep their exact transforms, the solid bodies stay as they are.
+   When a wardrobe opens, its door meshes are rotated around their real hinge (or slid on their track) in place, the solid body
+   is swapped for a hollow carcass with the same outer size, and the interior is built only from what the owner's photos show. */
+const SPOT_SAY={top:'لنبحث في الرف العلوي!',middle:'لنبحث في الرف الأوسط!',bottom:'لنبحث في الرف السفلي!',hanging:'لنبحث بين الملابس المعلّقة!',drawers:'لنبحث في الأدراج!'};
+const DOOR_CLOSED_SAY='الباب مغلق، لنفتحه أولاً!';
+const WARD={},spotMeshes=[];let clueSpot={};
+(function buildWardrobes(){
+  const IN=0xf1ede8,_b=new THREE.Box3(),_s=new THREE.Vector3(),_c=new THREE.Vector3();
+  const info=m=>{_b.setFromObject(m);_b.getSize(_s);_b.getCenter(_c);return {size:_s.clone(),c:_c.clone(),min:_b.min.clone(),max:_b.max.clone()};};
+  const silent=(o)=>{o.traverse(m=>{if(m.isMesh){m.castShadow=false;m.receiveShadow=true;}});return o;};
+  function mk(k,wall){const it=ITEMS[k];const body=it.meshes.reduce((a,m)=>info(m).size.length()>info(a).size.length()?m:a,it.meshes[0]);
+    const W={k,wall,it,body,doors:[],t:0,target:0,spots:[],extra:new THREE.Group(),carcass:new THREE.Group(),inside:new THREE.Group(),obs:[]};
+    W.extra.add(W.carcass,W.inside);W.extra.visible=false;scene.add(W.extra);WARD[k]=W;return W;}
+  function door(W,meshes,hinge,angle,slide){meshes.forEach(m=>{m.userData.door=W.k;m.userData.q0=m.quaternion.clone();});W.doors.push({meshes,hinge,angle,slide});}
+  function carcass(W,x0,x1,y0,y1,z0,z1,openSide,th=0.018){const m=W.body.material.clone();m.clippingPlanes=[];const p=W.carcass;
+    const add=(w,h,d,x,y,z)=>{const me=BX(w,h,d,m,x,y,z,p);me.userData.item=W.k;me.userData.carcass=true;pickables.push(me);return me;};
+    const cx=(x0+x1)/2,cy=(y0+y1)/2,cz=(z0+z1)/2;
+    add(x1-x0,th,z1-z0,cx,y1-th/2,cz);add(x1-x0,th,z1-z0,cx,y0+th/2,cz);
+    if(openSide==='+x'){add(th,y1-y0,z1-z0,x0+th/2,cy,cz);add(x1-x0,y1-y0,th,cx,cy,z0+th/2);add(x1-x0,y1-y0,th,cx,cy,z1-th/2);}
+    else{add(x1-x0,y1-y0,th,cx,cy,z0+th/2);add(th,y1-y0,z1-z0,x0+th/2,cy,cz);add(th,y1-y0,z1-z0,x1-th/2,cy,cz);}
+    silent(W.carcass);}
+  function spot(W,id,kind,cx,cy,cz,w,h,face){const geo=face==='+x'?new THREE.BoxGeometry(0.05,h,w):new THREE.BoxGeometry(w,h,0.05);
+    const me=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({colorWrite:false,depthWrite:false,transparent:true,opacity:0}));me.position.set(cx,cy,cz);
+    me.userData.spot={id,kind,k:W.k,look:new THREE.Vector3(cx,cy,cz)};me.visible=false;W.inside.add(me);pickables.push(me);spotMeshes.push(me);W.spots.push(me.userData.spot);}
+  const M=(c,o)=>mat(c,Object.assign({roughness:.9},o||{}));
+  const fold=(p,x,y,z,w,h,d,c,face)=>{const m=RB(face==='+x'?d:w,h,face==='+x'?w:d,0.012,M(c),x,y,z,p);return m;};
+
+  /* --- big sliding wardrobe (wall 2): panel 2 slides behind panel 1 and shows the shelf unit + hanging section from the photo --- */
+  {const W=mk('bigWardrobe',2);const ms=W.it.meshes.map(m=>[m,info(m)]);
+    const panel2=ms.filter(([m,i])=>i.min.x>2.94&&i.min.x<3.41&&i.min.z>0.615).map(([m])=>m);
+    ms.filter(([m,i])=>i.min.z>0.615&&!panel2.includes(m)).forEach(([m])=>{m.userData.doorish=true;});
+    door(W,panel2,null,0,{dx:-0.47,dz:-0.03});
+    const B=info(W.body);carcass(W,B.min.x,B.max.x,B.min.y,B.max.y,B.min.z,B.max.z,'+z');
+    const g=W.inside,wh=M(IN,{roughness:.6}),zf=0.6,zb=0.03,zc=(zf+zb)/2,zd=zf-zb,L=2.955,R=3.29,CX=3.122;
+    [L,R].forEach(x=>BX(0.018,2.2,zd,wh,x,1.2,zc,g));BX(0.018,1.03,zd,wh,CX,1.485,zc,g);
+    [0.40,0.97,1.32,1.68,2.0].forEach(y=>BX(R-L,0.018,zd,wh,(L+R)/2,y,zc,g));
+    const knob=mat(0xc9ccd4,{metalness:.7,roughness:.3});
+    [0.495,0.685,0.875].forEach(y=>{RB(R-L-0.02,0.18,0.02,0.006,wh,(L+R)/2,y,zf-0.01,g);SP(0.012,knob,(L+R)/2,y,zf+0.008,g);});
+    [[3.03,0.2,0x6fc3c6],[3.2,0.18,0x7fb7d9]].forEach(([x,h,c])=>RB(0.13,h,0.2,0.01,M(c),x,0.1+h/2,0.45,g));
+    const cub=[[2.0,0.97],[1.32,1.32],[1.68,1.68]];
+    [[0x3d5a7a,0x6b4f3a,0x2f2f36],[0x5f7a3f,0x8a8f99,0x9c6a8f],[0xe9e4dc,0x2b2b30,0xd8a0b0]].forEach((cols,r)=>{const y0=[0.97,1.32,1.68][r];
+      [(L+CX)/2,(CX+R)/2].forEach((x,ci)=>{let y=y0+0.009;cols.forEach((c,j)=>{if((j+ci)%3===2&&r===2)return;const h=0.035+((j+r+ci)%2)*0.015;fold(g,x,y+h/2,0.36,0.13,h,0.28,(ci?cols[(j+1)%3]:c));y+=h;});});});
+    [[3.02,0x2a211d],[3.12,0x5b4636],[3.22,0x7a2a2f]].forEach(([x,c])=>{const s=SP(0.07,M(c,{roughness:.5}),x,2.07,0.33,g);s.scale.set(1,0.7,0.8);});
+    const strap=new THREE.Mesh(new THREE.TorusGeometry(0.07,0.008,6,20,Math.PI*1.2),M(0xb3262f,{roughness:.5}));strap.position.set(3.2,1.98,0.5);strap.rotation.z=Math.PI;g.add(strap);
+    CY(0.012,0.012,0.6,knob,3.58,2.0,0.32,g).rotation.z=Math.PI/2;
+    [[3.31,0x3c4a2e],[3.345,0x22303f],[3.38,0x5a5f66],[3.43,0x2d2d33],[3.5,0x41543a],[3.6,0x3a3f55],[3.7,0x6a4c3b]].forEach(([x,c],i)=>{
+      const h=0.85-(i%3)*0.12;RB(0.028,h,0.36,0.01,M(c),x,2.0-0.06-h/2,0.32,g);});
+    silent(g);
+    spot(W,'big_top','top',(L+R)/2,2.155,0.56,0.33,0.29,'+z');spot(W,'big_middle','middle',(L+R)/2,1.485,0.56,0.33,1.0,'+z');
+    spot(W,'big_drawers','drawers',(L+R)/2,0.685,0.56,0.33,0.56,'+z');spot(W,'big_bottom','bottom',(L+R)/2,0.25,0.56,0.33,0.29,'+z');
+    spot(W,'big_hanging','hanging',3.35,1.45,0.56,0.12,1.05,'+z');
+    W.stand=new THREE.Vector3((L+R)/2+0.05,0,0.9);W.lookPt=new THREE.Vector3((L+R)/2+0.05,1.2,0.4);
+    W.view={tgt:new THREE.Vector3(3.17,1.22,0.5),dist:2.05,dir:new THREE.Vector3(0,0.42,1).normalize()};}
+
+  /* --- wall-1 hinged wardrobes --- */
+  function hinged(k,pairZ,hingeAngle){const W=mk(k,1);const ms=W.it.meshes.map(m=>[m,info(m)]);
+    const fronts=ms.filter(([m,i])=>i.min.x>0.53&&m!==W.body&&i.size.y>0.01);return {W,fronts};}
+  /* by the window: 2 doors, hinges on the outer edges, shelves only */
+  {const {W,fronts}=hinged('wardrobe2');const A=fronts.filter(([m,i])=>i.c.z<3.18).map(([m])=>m),Bm=fronts.filter(([m,i])=>i.c.z>=3.18).map(([m])=>m);
+    const B=info(W.body);door(W,A,new THREE.Vector3(0.558,0,B.min.z+0.027),1.75);door(W,Bm,new THREE.Vector3(0.558,0,B.max.z-0.027),-1.75);
+    carcass(W,B.min.x,B.max.x,B.min.y,B.max.y,B.min.z,B.max.z,'+x');
+    const g=W.inside,wh=M(IN,{roughness:.6}),x0=0.03,x1=0.53,xc=(x0+x1)/2,z0=B.min.z+0.02,z1=B.max.z-0.02,zc=(z0+z1)/2,zw=z1-z0;
+    [0.38,0.72,1.07,1.42,1.78].forEach(y=>BX(x1-x0,0.018,zw,wh,xc,y,zc,g));
+    const blob=(z,y,w,h,c)=>{const s=SP(0.5,M(c),0.3,y+h/2,z,g);s.scale.set(0.42,h,w);};
+    [[0.38,[[2.98,0.32,0.17,0x5d5f66],[3.32,0.36,0.2,0x3a4a6a]]],[0.72,[[2.98,0.36,0.24,0xeee9e0],[3.34,0.38,0.24,0xe7ddd0]]],
+     [1.07,[[2.97,0.3,0.22,0x1f2a52],[3.3,0.42,0.3,0xb9b9bd],[3.4,0.5,0.05,0xc8242b]]],[1.42,[[3.0,0.36,0.22,0x1f2a52],[3.36,0.36,0.16,0xd9e2ee]]],
+     [1.78,[[2.95,0.2,0.2,0xf3a6c0],[3.15,0.18,0.18,0x9fd0f0],[3.38,0.24,0.2,0xf0c66b]]]].forEach(([y,list])=>list.forEach(([z,w,h,c])=>blob(z,y+0.01,w,h,c)));
+    silent(g);
+    spot(W,'w2_top','top',0.5,1.96,zc,zw,0.36,'+x');spot(W,'w2_middle','middle',0.5,1.42,zc,zw,0.7,'+x');spot(W,'w2_bottom','bottom',0.5,0.56,zc,zw,1.0,'+x');
+    W.stand=new THREE.Vector3(0.95,0,zc);W.lookPt=new THREE.Vector3(0.3,1.1,zc);W.view={tgt:new THREE.Vector3(0.45,1.12,zc),dist:2.0,dir:new THREE.Vector3(1,0.42,0).normalize()};}
+  /* by the door: the two doors on the door side open as a pair (hinges on their outer edges); the third door stays closed */
+  {const {W,fronts}=hinged('wardrobe3');const d1=fronts.filter(([m,i])=>i.c.z<1.88).map(([m])=>m),d2=fronts.filter(([m,i])=>i.c.z>=1.88&&i.c.z<2.29).map(([m])=>m);
+    fronts.filter(([m,i])=>i.c.z>=2.29).forEach(([m])=>{m.userData.doorish=false;});
+    const B=info(W.body),zA=B.min.z+0.027,zB=2.283;door(W,d1,new THREE.Vector3(0.558,0,zA),1.75);door(W,d2,new THREE.Vector3(0.558,0,zB),-1.75);
+    carcass(W,B.min.x,B.max.x,B.min.y,B.max.y,B.min.z,2.292,'+x');
+    const g=W.inside,wh=M(IN,{roughness:.6}),wood=M(0xc9a27a,{roughness:.7}),x0=0.03,x1=0.53,xc=(x0+x1)/2,z0=B.min.z+0.02,z1=2.275,zc=(z0+z1)/2,zw=z1-z0;
+    BX(x1-x0,0.018,zw,wh,xc,1.80,zc,g);BX(x1-x0,0.022,zw,wood,xc,0.62,zc,g);
+    CY(0.012,0.012,zw,mat(0xeeeeee,{metalness:.3,roughness:.4}),0.3,1.70,zc,g).rotation.x=Math.PI/2;
+    [[0x1d1d22],[0xe2b33a],[0x1f1f25],[0x7aa0e0],[0xf08aa8],[0xf4c3cf],[0xd9e6c8],[0xc9b7a8],[0x9ab7d8],[0x7a1f2a],[0x4e7a3a]].forEach(([c],i)=>{
+      const z=z0+0.05+i*(zw-0.1)/10,h=0.55+(i%3)*0.1;RB(0.34,h,0.025,0.01,M(c),0.3,1.68-h/2,z,g);});
+    [[1.62,0.12,0xd8c8e8],[1.86,0.14,0xf2ede2],[2.1,0.12,0xe9c9d2]].forEach(([z,h,c])=>RB(0.34,h,0.22,0.02,M(c),0.3,0.632+h/2,z,g));
+    [[1.66,0.2,0xf0b2b8],[2.06,0.17,0xc9d6e8]].forEach(([z,h,c])=>RB(0.34,h,0.3,0.02,M(c),0.3,0.09+h/2,z,g));
+    [[1.62,0xf3a6c0],[1.9,0xf6d36b],[2.14,0xbfe3f0]].forEach(([z,c])=>RB(0.3,0.16,0.2,0.02,M(c,{roughness:.5}),0.3,1.81+0.08,z,g));
+    silent(g);
+    spot(W,'w3_top','top',0.5,1.915,zc,zw,0.23,'+x');spot(W,'w3_hanging','hanging',0.5,1.32,zc,zw,0.74,'+x');
+    spot(W,'w3_middle','middle',0.5,0.79,zc,zw,0.32,'+x');spot(W,'w3_bottom','bottom',0.5,0.35,zc,zw,0.52,'+x');
+    W.stand=new THREE.Vector3(0.95,0,zc);W.lookPt=new THREE.Vector3(0.3,1.1,zc);W.view={tgt:new THREE.Vector3(0.45,1.12,zc),dist:2.0,dir:new THREE.Vector3(1,0.42,0).normalize()};}
+
+  // open-door footprints become temporary nav obstacles
+  Object.values(WARD).forEach(W=>{applyDoors(W,1);W.obs=W.doors.filter(d=>!d.slide).map(d=>{const bb=new THREE.Box3();d.meshes.forEach(m=>bb.union(new THREE.Box3().setFromObject(m)));return bb;});applyDoors(W,0);});
+})();
+function applyDoors(W,e){W.doors.forEach(d=>{const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),d.angle*e);
+  d.meshes.forEach(m=>{const p0=m.userData.p0;
+    if(d.slide){const k=Math.min(1,e*5);m.position.set(p0.x+d.slide.dx*Math.max(0,(e-0.12)/0.88),p0.y,p0.z+d.slide.dz*k);m.quaternion.copy(m.userData.q0);}
+    else{const v=p0.clone().sub(d.hinge).applyQuaternion(q);m.position.copy(d.hinge).add(v);m.quaternion.copy(q).multiply(m.userData.q0);}});});}
+function wardNav(){NAV_EXTRA.length=0;Object.values(WARD).forEach(W=>{if(W.target>0)NAV_EXTRA.push(...W.obs);});NAV.rebuild();}
+function syncWardCuts(){const s=(cutKey||'false,false,false,false').split(',').map(v=>v==='true');Object.values(WARD).forEach(W=>setCut(W.extra,s[W.wall-1]));}
+function setWardOpen(W,open,instant){W.target=open?1:0;if(instant){W.t=W.target;applyDoors(W,W.t);}wardNav();refreshWard(W);}
+function refreshWard(W){const on=W.t>0.001;W.body.visible=!on;W.extra.visible=on;spotMeshes.forEach(m=>{if(m.userData.spot.k===W.k)m.visible=W.t>0.98;});}
+function updateWardrobes(dt){Object.values(WARD).forEach(W=>{if(W.t===W.target)return;const s=dt/0.65;W.t=W.target>W.t?Math.min(W.target,W.t+s):Math.max(W.target,W.t-s);
+  applyDoors(W,ease(W.t));refreshWard(W);});}
+function wardView(W){const t=Math.tan(45*Math.PI/360),a=camera.aspect;const d=Math.min(4.2,Math.max(W.view.dist,(W.k==='bigWardrobe'?0.75:1.05)/(2*t*Math.min(1,a))));
+  return {pos:W.view.tgt.clone().addScaledVector(W.view.dir,d),tgt:W.view.tgt.clone(),fov:45};}
+const spotRing=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffe7a0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));spotRing.scale.set(0.35,0.35,1);scene.add(spotRing);let spotRingT=0;
+function pulseSpot(p){spotRing.position.copy(p);spotRingT=1;}
+function updateSpotRing(dt){if(spotRingT<=0)return;spotRingT=Math.max(0,spotRingT-dt/1.2);spotRing.material.opacity=Math.sin(spotRingT*Math.PI)*0.9;spotRing.scale.setScalar(0.3+0.25*(1-spotRingT));}
+function wardrobeTap(k,obj){const W=WARD[k];lastAct=performance.now();flash(k);SFX.tap();
+  if(W.target===1&&obj&&obj.userData.door){say(ITEMS[k].say);setWardOpen(W,false);return;}            // tap an open door: close it
+  if(W.target===1){say(ITEMS[k].say);flyTo(wardView(W));return;}
+  const isDoor=!!(obj&&(obj.userData.door||obj.userData.doorish));
+  say(isDoor?ITEMS[k].say:DOOR_CLOSED_SAY);if(hintGlow.key===k)hintGlow.until=0;
+  walkTo(W.stand,W.lookPt,'reach',()=>{setWardOpen(W,true);flyTo(wardView(W));});}
+function spotTap(s){const W=WARD[s.k];lastAct=performance.now();SFX.tap();pulseSpot(s.look);
+  if(W.target!==1){say(DOOR_CLOSED_SAY);return;}
+  const stand=new THREE.Vector3(s.look.x,0,s.look.z);const wt=walkTo(stand,s.look,'search');
+  say(SPOT_SAY[s.kind]);if(state!=='play')return;
+  const isClue=clues.includes(s.k)&&clueSpot[s.k]===s.id,already=found.includes(s.k);
+  if(isClue&&!already){found.push(s.k);awardStar(s.look.clone().setY(s.look.y+0.2),Math.max(1600,wt*1000+1500));}
+  else if(already&&clueSpot[s.k]===s.id){later(()=>say('وجدنا النجمة هنا من قبل!'),1600);}
+  else later(()=>{SFX.nope();say(CHEER[cheerI++%CHEER.length]);},Math.max(1700,wt*1000+1300));}
+function resetWardrobes(){clueSpot={};clues.forEach(k=>{const W=WARD[k];if(W)clueSpot[k]=W.spots[Math.floor(Math.random()*W.spots.length)].id;});
+  Object.values(WARD).forEach(W=>setWardOpen(W,false,true));spotRingT=0;spotRing.material.opacity=0;}
+syncWardCuts();
+
 /* ---------- 10. input: tap vs drag ---------- */
 const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();let down=null;
 function pick(ev){const r=canvas.getBoundingClientRect();ndc.set(((ev.clientX-r.left)/r.width)*2-1,-((ev.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,camera);
@@ -905,7 +1056,7 @@ function inGroupVisible(o){while(o){if(!o.visible)return false;o=o.parent;}retur
 canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:performance.now()};});
 canvas.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y),dt=performance.now()-down.t;down=null;
   if(moved>10||dt>650||state==='intro'||state==='reveal')return;const h=pick(e);if(!h)return;
-  if(h.object===floor){lastAct=performance.now();walkTo(h.point,null);return;}tapItem(h.object.userData.item,h.point);});
+  if(h.object===floor){lastAct=performance.now();walkTo(h.point,null);return;}if(h.object.userData.spot){if(state==='play'||state==='done')spotTap(h.object.userData.spot);return;}tapItem(h.object.userData.item,h.point,h.object);});
 let hoverT=0;canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||e.buttons)return;const n=performance.now();if(n-hoverT<80)return;hoverT=n;const h=pick(e);canvas.style.cursor=h&&h.object!==floor&&state!=='intro'?'pointer':'grab';});
 
 /* ---------- 11. HUD buttons ---------- */
@@ -928,7 +1079,7 @@ function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;const t=now
     camera.position.lerpVectors(camTween.from.pos,camTween.to.pos,e);controls.target.lerpVectors(camTween.from.tgt,camTween.to.tgt,e);
     camera.fov=camTween.from.fov+(camTween.to.fov-camTween.from.fov)*e;camera.updateProjectionMatrix();if(k>=1){camTween=null;controls.enabled=true;}}
   controls.update();controls.target.clamp(TMIN,TMAX);
-  updateCuts();updateRose(dt,t);updateFx(dt,now);updateStars(dt);updateChest(dt);updateConfetti(dt);
+  updateCuts();updateWardrobes(dt);updateSpotRing(dt);updateRose(dt,t);updateFx(dt,now);updateStars(dt);updateChest(dt);updateConfetti(dt);
   if(state==='play'&&now-lastAct>16000)giveHint();
   const pa=pg.attributes.position.array,ts=now*0.0004;for(let i=0;i<pa.length;i+=3){pa[i+1]=base0[i+1]+Math.sin(ts+i)*0.08;pa[i]=base0[i]+Math.cos(ts*0.7+i)*0.05;}pg.attributes.position.needsUpdate=true;
   renderer.render(scene,camera);requestAnimationFrame(frame);}

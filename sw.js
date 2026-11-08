@@ -1,11 +1,16 @@
 /* Rose's Treasure Hunt — offline cache: game files + all 40 voice clips */
-const CACHE='rose-th-v3-voice-1';
+const CACHE='rose-th-v3-wardrobes-1';
 const ASSETS=[
 "./",
 "index.html",
 "vendor/three.min.js",
 "vendor/OrbitControls.js",
 "assets/audio/dialogue/dlg_start_welcome.mp3",
+"assets/audio/dialogue/dlg_spot_hanging.mp3",
+"assets/audio/dialogue/dlg_spot_bottom_shelf.mp3",
+"assets/audio/dialogue/dlg_spot_middle_shelf.mp3",
+"assets/audio/dialogue/dlg_spot_top_shelf.mp3",
+"assets/audio/dialogue/dlg_door_closed.mp3",
 "assets/audio/dialogue/dlg_intro_press_start.mp3",
 "assets/audio/dialogue/dlg_replay.mp3",
 "assets/audio/dialogue/dlg_item_bed1.mp3",

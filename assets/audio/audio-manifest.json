@@ -408,6 +408,66 @@
    "source": "cel_victory.mp3.mp3 (user-generated, ElevenLabs)"
   },
   {
+   "id": "dlg_door_closed",
+   "category": "exploration",
+   "text": "الباب مغلق، لنفتحه أولاً!",
+   "trigger": "tap a wardrobe body (not a door) while it is closed",
+   "emotion": "clear, calm",
+   "duration_s": 3.03,
+   "file": "assets/audio/dialogue/dlg_door_closed.mp3",
+   "source": "dlg_door_closed.mp3.mp3 (user-generated, ElevenLabs)"
+  },
+  {
+   "id": "dlg_spot_top_shelf",
+   "category": "exploration",
+   "text": "لنبحث في الرف العلوي!",
+   "trigger": "tap a top-shelf hotspot inside an open wardrobe",
+   "emotion": "curious, playful",
+   "duration_s": 1.65,
+   "file": "assets/audio/dialogue/dlg_spot_top_shelf.mp3",
+   "source": "dlg_spot_top_shelf.mp3.mp3 (user-generated, ElevenLabs)"
+  },
+  {
+   "id": "dlg_spot_middle_shelf",
+   "category": "exploration",
+   "text": "لنبحث في الرف الأوسط!",
+   "trigger": "tap a middle-shelf hotspot",
+   "emotion": "curious, playful",
+   "duration_s": 1.8,
+   "file": "assets/audio/dialogue/dlg_spot_middle_shelf.mp3",
+   "source": "dlg_spot_middle_shelf.mp3.mp3 (user-generated, ElevenLabs)"
+  },
+  {
+   "id": "dlg_spot_bottom_shelf",
+   "category": "exploration",
+   "text": "لنبحث في الرف السفلي!",
+   "trigger": "tap a bottom-shelf hotspot",
+   "emotion": "curious, playful",
+   "duration_s": 1.7,
+   "file": "assets/audio/dialogue/dlg_spot_bottom_shelf.mp3",
+   "source": "dlg_spot_bottom_shelf.mp3.mp3 (user-generated, ElevenLabs)"
+  },
+  {
+   "id": "dlg_spot_hanging",
+   "category": "exploration",
+   "text": "لنبحث بين الملابس المعلّقة!",
+   "trigger": "tap a hanging-clothes hotspot",
+   "emotion": "curious, playful",
+   "duration_s": 2.22,
+   "file": "assets/audio/dialogue/dlg_spot_hanging.mp3",
+   "source": "dlg_spot_hanging.mp3.mp3 (user-generated, ElevenLabs)"
+  },
+  {
+   "id": "dlg_spot_drawers",
+   "category": "exploration",
+   "text": "لنبحث في الأدراج!",
+   "trigger": "tap the drawers hotspot in the big wardrobe",
+   "emotion": "curious, playful",
+   "duration_s": null,
+   "file": "assets/audio/dialogue/dlg_spot_drawers.mp3",
+   "status": "PENDING — not recorded yet; text shows, no sound"
+  },
+  {
    "id": "sfx_tap",
    "category": "sound-effect",
    "text": null,
