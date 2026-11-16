@@ -468,6 +468,46 @@
    "status": "PENDING — not recorded yet; text shows, no sound"
   },
   {
+   "id": "dlg_fish_hello",
+   "category": "aquarium",
+   "text": "واو يا روز! انظري إلى السمكة الجميلة!",
+   "trigger": "first time the aquarium is opened (once per game load)",
+   "emotion": "warm, playful",
+   "duration_s": 3.79,
+   "file": "assets/audio/dialogue/dlg_fish_hello.mp3",
+   "status": "RECORDED — Sara (eleven_v4), delivered by user 2026-11-16, used as delivered"
+  },
+  {
+   "id": "dlg_fish_feed",
+   "category": "aquarium",
+   "text": "هيا نُطعم السمكة!",
+   "trigger": "tap the food bowl / food button (not during the 8 s wait)",
+   "emotion": "warm, playful",
+   "duration_s": 1.8,
+   "file": "assets/audio/dialogue/dlg_fish_feed.mp3",
+   "status": "RECORDED — Sara (eleven_v4), delivered by user 2026-11-16, used as delivered"
+  },
+  {
+   "id": "dlg_fish_yum",
+   "category": "aquarium",
+   "text": "بالهناء والشفاء يا سمكتي!",
+   "trigger": "after the fish has eaten all the food",
+   "emotion": "warm, playful",
+   "duration_s": 2.51,
+   "file": "assets/audio/dialogue/dlg_fish_yum.mp3",
+   "status": "RECORDED — Sara (eleven_v4), delivered by user 2026-11-16, used as delivered"
+  },
+  {
+   "id": "dlg_fish_light",
+   "category": "aquarium",
+   "text": "هيا نغيّر لون الضوء!",
+   "trigger": "first light change in each aquarium visit (not every colour step)",
+   "emotion": "warm, playful",
+   "duration_s": 2.27,
+   "file": "assets/audio/dialogue/dlg_fish_light.mp3",
+   "status": "RECORDED — Sara (eleven_v4), delivered by user 2026-11-16, used as delivered"
+  },
+  {
    "id": "sfx_tap",
    "category": "sound-effect",
    "text": null,
@@ -506,6 +546,14 @@
    "description": "two notes 660→880 Hz",
    "trigger": "start button",
    "file": "(procedural WebAudio — kept as is)"
+  },
+  {
+   "id": "sfx_aquarium",
+   "category": "sound-effect",
+   "text": null,
+   "description": "soft plop per pellet, two-note bubble chime when the fish eats, two-note chime on light change",
+   "trigger": "aquarium",
+   "file": "(procedural WebAudio)"
   }
  ],
  "processing": "trim leading/trailing silence (-45 dB), EBU R128 loudnorm I=-18 LUFS TP=-2 dBTP, 15/40 ms fades, mono 44.1 kHz MP3 96 kbps"

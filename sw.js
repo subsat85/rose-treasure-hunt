@@ -1,5 +1,5 @@
-/* Rose's Treasure Hunt — offline cache: game files + all 40 voice clips */
-const CACHE='rose-th-v3-wardrobes-1';
+/* Rose's Treasure Hunt — offline cache: game files + all 44 voice clips */
+const CACHE='rose-th-v3-wardrobes-2';
 const ASSETS=[
 "./",
 "index.html",
@@ -11,6 +11,10 @@ const ASSETS=[
 "assets/audio/dialogue/dlg_spot_middle_shelf.mp3",
 "assets/audio/dialogue/dlg_spot_top_shelf.mp3",
 "assets/audio/dialogue/dlg_door_closed.mp3",
+"assets/audio/dialogue/dlg_fish_hello.mp3",
+"assets/audio/dialogue/dlg_fish_feed.mp3",
+"assets/audio/dialogue/dlg_fish_yum.mp3",
+"assets/audio/dialogue/dlg_fish_light.mp3",
 "assets/audio/dialogue/dlg_intro_press_start.mp3",
 "assets/audio/dialogue/dlg_replay.mp3",
 "assets/audio/dialogue/dlg_item_bed1.mp3",
@@ -52,7 +56,7 @@ const ASSETS=[
 "assets/audio/celebrations/cel_victory.mp3"
 ];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('rose-th-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET')return;const same=new URL(r.url).origin===location.origin;
   if(r.mode==='navigate'){e.respondWith(fetch(r).then(res=>{const cp=res.clone();caches.open(CACHE).then(c=>c.put('index.html',cp));return res;}).catch(()=>caches.match('index.html')));return;}
   if(!same)return;

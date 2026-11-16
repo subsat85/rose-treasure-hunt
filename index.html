@@ -65,7 +65,15 @@ body{height:100%;margin:0;background:radial-gradient(120% 90% at 50% 0%,var(--sk
 @keyframes breathe{50%{transform:scale(1.05)}}
 .toast{position:absolute;top:84px;left:50%;transform:translateX(-50%);background:var(--gold);color:#5b3a08;font-weight:800;font-size:22px;padding:8px 22px 5px;border-radius:999px;border:3px solid #fff;
   box-shadow:0 12px 26px -12px rgba(160,100,10,.7);pointer-events:none}
+.fishb{position:absolute;top:calc(12px + 56px + 10px);right:max(14px,env(safe-area-inset-right,0px));background:#d9f1fb;display:none}
+@media (max-width:699px){#app[data-cam=room] .fishb{display:grid}}
+#app:has(#intro:not([hidden])) .fishb,#app:has(#outro:not([hidden])) .fishb{display:none!important}
+.aq{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(132px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.ab{width:68px;height:68px;border-radius:50%;border:4px solid #fff;background:var(--cream);display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 22px -10px rgba(140,70,110,.7);transition:transform .15s}
+.ab svg{width:42px;height:42px}.ab:active{transform:scale(.9)}.ab:focus-visible{outline:4px solid var(--pink);outline-offset:3px}
 @media (max-width:420px){.rb{width:48px;height:48px}.rb svg{width:24px;height:24px}.slot{width:32px;height:32px}.slot svg{width:30px;height:30px}.tray{padding:5px 9px}}
+@media (max-width:699px){.rb.fishb{width:62px;height:62px}.rb.fishb svg{width:34px;height:34px}}
+@media (max-width:420px){.rb.fishb{top:70px}}
 @media (prefers-reduced-motion:reduce){.big{animation:none}.bubble.pop{animation:none}}
 </style>
 
@@ -83,6 +91,7 @@ body{height:100%;margin:0;background:radial-gradient(120% 90% at 50% 0%,var(--sk
       </button>
     </div>
     <div class="tray" id="tray" aria-label="النجوم"></div>
+    <button class="rb fishb" id="btnFish" aria-label="حوض السمك"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-5 9-6 13-2l4-3v10l-4-3c-4 4-10 3-13-2z" fill="#f59a3c" stroke="#a5521a" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8" cy="11" r="1.3" fill="#3a2318"/></svg></button>
     <div class="btns">
       <button class="rb hint" id="btnHint" aria-label="مساعدة">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" fill="currentColor" fill-opacity=".25"/></svg>
@@ -93,6 +102,10 @@ body{height:100%;margin:0;background:radial-gradient(120% 90% at 50% 0%,var(--sk
   <div class="bubble" id="bubble" hidden>
     <svg class="face" viewBox="0 0 52 52" aria-hidden="true"><path d="M8 50h36c0-7-7-10-18-10S8 43 8 50z" fill="#5d5d63"/><path d="M12 22c-3 8-2 16 0 22M40 22c3 8 2 16 0 22" stroke="#3a2318" stroke-width="7" stroke-linecap="round" fill="none"/><path d="M8 40l4 2-4 3zM16 40l-4 2 4 3z" fill="#f38bb2"/><path d="M36 40l4 2-4 3zM44 40l-4 2 4 3z" fill="#f38bb2"/><circle cx="26" cy="24" r="16" fill="#3a2318"/><ellipse cx="26" cy="27" rx="14" ry="14.5" fill="#f7cdb3"/><path d="M11 25c1-11 8-15 15-15s14 4 15 15c-4-6-9-9-15-9.5C20 16 15 19 11 25z" fill="#3a2318"/><path d="M26 10v6" stroke="#55351f" stroke-width="1"/><ellipse cx="20.5" cy="27" rx="3.3" ry="4" fill="#6e3e1b"/><ellipse cx="31.5" cy="27" rx="3.3" ry="4" fill="#6e3e1b"/><circle cx="19.5" cy="25.6" r="1.2" fill="#fff"/><circle cx="30.5" cy="25.6" r="1.2" fill="#fff"/><circle cx="16" cy="32" r="2.6" fill="#f3a0ad" opacity=".55"/><circle cx="36" cy="32" r="2.6" fill="#f3a0ad" opacity=".55"/><path d="M22 34q4 3.5 8 0" stroke="#c9606f" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
     <p id="say"></p>
+  </div>
+  <div class="aq" id="aqPanel" hidden>
+    <button class="ab" id="btnFood" aria-label="أطعمي السمكة"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 22h34c0 9-7 16-17 16S7 31 7 22z" fill="#f3e9d8" stroke="#b08a5c" stroke-width="2.5"/><g fill="#9a6a3d"><circle cx="17" cy="19" r="3"/><circle cx="24" cy="17" r="3"/><circle cx="31" cy="19" r="3"/><circle cx="20.5" cy="13" r="2.6"/><circle cx="27.5" cy="13" r="2.6"/></g></svg></button>
+    <button class="ab" id="btnLight" aria-label="غيّري لون الضوء"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 7a12 12 0 0 0-7 21.7c1.3 1 2 2.4 2 4V34h10v-1.3c0-1.6.7-3 2-4A12 12 0 0 0 24 7z" fill="var(--led,#f2f6ff)" stroke="#5a3f52" stroke-width="2.5"/><path d="M19 38h10M20.5 42h7" stroke="#5a3f52" stroke-width="3" stroke-linecap="round"/></svg></button>
   </div>
   <section class="card" id="intro">
     <div class="kicker">البحث عن الكنز</div>
@@ -846,7 +859,7 @@ if(window.speechSynthesis){pickVoice();speechSynthesis.addEventListener&&speechS
 const bubble=document.getElementById('bubble'),sayEl=document.getElementById('say');
 /* recorded voice (ElevenLabs, voice "Sara", eleven_v4): one clip per line, played through Web Audio after the first tap.
    Only one voice clip plays at a time; browser speech is kept as a fallback for a clip that failed to load. */
-const VOICE={"الباب مغلق، لنفتحه أولاً!":"assets/audio/dialogue/dlg_door_closed.mp3","لنبحث في الرف العلوي!":"assets/audio/dialogue/dlg_spot_top_shelf.mp3","لنبحث في الرف الأوسط!":"assets/audio/dialogue/dlg_spot_middle_shelf.mp3","لنبحث في الرف السفلي!":"assets/audio/dialogue/dlg_spot_bottom_shelf.mp3","لنبحث بين الملابس المعلّقة!":"assets/audio/dialogue/dlg_spot_hanging.mp3","لنبحث في الأدراج!":"assets/audio/dialogue/dlg_spot_drawers.mp3","مرحباً روز! هيا نبحث عن ثلاث نجوم مخبأة في غرفتك. اضغطي على الأغراض!": "assets/audio/dialogue/dlg_start_welcome.mp3", "اضغطي على زر ابدئي المغامرة": "assets/audio/dialogue/dlg_intro_press_start.mp3", "لعبة جديدة! النجوم تخبّأت في أماكن جديدة": "assets/audio/dialogue/dlg_replay.mp3", "هل يوجد شيء مخبأ تحت السرير؟": "assets/audio/dialogue/dlg_item_bed1.mp3", "سرير مريح! لنبحث بين الوسائد": "assets/audio/dialogue/dlg_item_bed2.mp3", "انظري جيداً، قد يكون الكنز قريباً!": "assets/audio/dialogue/dlg_item_table.mp3", "لنبحث داخل الخزانة!": "assets/audio/dialogue/dlg_item_wardrobe3.mp3", "خزانة الملابس! هل يوجد شيء هنا؟": "assets/audio/dialogue/dlg_item_wardrobe2.mp3", "خزانة كبيرة! لنبحث خلف الأبواب": "assets/audio/dialogue/dlg_item_bigWardrobe.mp3", "ربما يوجد دليل على المكتب!": "assets/audio/dialogue/dlg_item_desk.mp3", "مرحباً أيها الدبّ الصغير!": "assets/audio/dialogue/dlg_item_teddy.mp3", "صناديق الألعاب! يا للروعة!": "assets/audio/dialogue/dlg_item_bins.mp3", "سلة صغيرة! هل الدليل هنا؟": "assets/audio/dialogue/dlg_item_basket.mp3", "لا تخرجي! الكنز هنا في الغرفة": "assets/audio/dialogue/dlg_item_door1.mp3", "باب ينطوي مثل المروحة!": "assets/audio/dialogue/dlg_item_grayDoor.mp3", "كم طولك يا روز؟ أنتِ تكبرين!": "assets/audio/dialogue/dlg_item_scale.mp3", "أرى السماء والأشجار!": "assets/audio/dialogue/dlg_item_window.mp3", "نجمة معلّقة جميلة!": "assets/audio/dialogue/dlg_item_star.mp3", "ورود وردية على الحائط!": "assets/audio/dialogue/dlg_item_flowers.mp3", "سجادة الورود الناعمة!": "assets/audio/dialogue/dlg_item_rug.mp3", "المصباح يضيء الغرفة!": "assets/audio/dialogue/dlg_item_pendant.mp3", "ابحثي عند السرير القريب من الخزانة الكبيرة": "assets/audio/dialogue/dlg_hint_bed1.mp3", "ابحثي عند السرير القريب من النافذة": "assets/audio/dialogue/dlg_hint_bed2.mp3", "ابحثي عند الطاولة الصغيرة بين السريرين": "assets/audio/dialogue/dlg_hint_table.mp3", "ابحثي في الخزانة ذات القلوب الوردية": "assets/audio/dialogue/dlg_hint_wardrobe3.mp3", "ابحثي في الخزانة الصغيرة بجانب النافذة": "assets/audio/dialogue/dlg_hint_wardrobe2.mp3", "ابحثي في الخزانة البيضاء الكبيرة": "assets/audio/dialogue/dlg_hint_bigWardrobe.mp3", "ابحثي عند مكتبك الوردي": "assets/audio/dialogue/dlg_hint_desk.mp3", "ابحثي عند الدبّ الصغير على المكتب": "assets/audio/dialogue/dlg_hint_teddy.mp3", "ابحثي في صناديق الألعاب فوق الخزانة": "assets/audio/dialogue/dlg_hint_bins.mp3", "ابحثي في السلة بجانب الباب الرمادي": "assets/audio/dialogue/dlg_hint_basket.mp3", "ليس هنا… جرّبي مكاناً آخر!": "assets/audio/reactions/rx_not_here_1.mp3", "اقتربتِ! ابحثي في مكانٍ آخر": "assets/audio/reactions/rx_not_here_2.mp3", "أنتِ رائعة! حاولي مرةً أخرى": "assets/audio/reactions/rx_not_here_3.mp3", "وجدنا النجمة هنا من قبل!": "assets/audio/reactions/rx_already_found.mp3", "وجدتِ النجمة الأولى! بقيت نجمتان": "assets/audio/reactions/rx_star1_left2.mp3", "وجدتِ النجمة الثانية! بقيت نجمة واحدة": "assets/audio/reactions/rx_star2_left1.mp3", "رائع! جمعتِ كل النجوم!": "assets/audio/celebrations/cel_all_stars.mp3", "انظري! صندوق الكنز يظهر": "assets/audio/celebrations/cel_chest_appears.mp3", "أحسنتِ يا روز! لقد وجدتِ الكنز!": "assets/audio/celebrations/cel_victory.mp3"};
+const VOICE={"واو يا روز! انظري إلى السمكة الجميلة!":"assets/audio/dialogue/dlg_fish_hello.mp3","هيا نُطعم السمكة!":"assets/audio/dialogue/dlg_fish_feed.mp3","بالهناء والشفاء يا سمكتي!":"assets/audio/dialogue/dlg_fish_yum.mp3","هيا نغيّر لون الضوء!":"assets/audio/dialogue/dlg_fish_light.mp3","الباب مغلق، لنفتحه أولاً!":"assets/audio/dialogue/dlg_door_closed.mp3","لنبحث في الرف العلوي!":"assets/audio/dialogue/dlg_spot_top_shelf.mp3","لنبحث في الرف الأوسط!":"assets/audio/dialogue/dlg_spot_middle_shelf.mp3","لنبحث في الرف السفلي!":"assets/audio/dialogue/dlg_spot_bottom_shelf.mp3","لنبحث بين الملابس المعلّقة!":"assets/audio/dialogue/dlg_spot_hanging.mp3","لنبحث في الأدراج!":"assets/audio/dialogue/dlg_spot_drawers.mp3","مرحباً روز! هيا نبحث عن ثلاث نجوم مخبأة في غرفتك. اضغطي على الأغراض!": "assets/audio/dialogue/dlg_start_welcome.mp3", "اضغطي على زر ابدئي المغامرة": "assets/audio/dialogue/dlg_intro_press_start.mp3", "لعبة جديدة! النجوم تخبّأت في أماكن جديدة": "assets/audio/dialogue/dlg_replay.mp3", "هل يوجد شيء مخبأ تحت السرير؟": "assets/audio/dialogue/dlg_item_bed1.mp3", "سرير مريح! لنبحث بين الوسائد": "assets/audio/dialogue/dlg_item_bed2.mp3", "انظري جيداً، قد يكون الكنز قريباً!": "assets/audio/dialogue/dlg_item_table.mp3", "لنبحث داخل الخزانة!": "assets/audio/dialogue/dlg_item_wardrobe3.mp3", "خزانة الملابس! هل يوجد شيء هنا؟": "assets/audio/dialogue/dlg_item_wardrobe2.mp3", "خزانة كبيرة! لنبحث خلف الأبواب": "assets/audio/dialogue/dlg_item_bigWardrobe.mp3", "ربما يوجد دليل على المكتب!": "assets/audio/dialogue/dlg_item_desk.mp3", "مرحباً أيها الدبّ الصغير!": "assets/audio/dialogue/dlg_item_teddy.mp3", "صناديق الألعاب! يا للروعة!": "assets/audio/dialogue/dlg_item_bins.mp3", "سلة صغيرة! هل الدليل هنا؟": "assets/audio/dialogue/dlg_item_basket.mp3", "لا تخرجي! الكنز هنا في الغرفة": "assets/audio/dialogue/dlg_item_door1.mp3", "باب ينطوي مثل المروحة!": "assets/audio/dialogue/dlg_item_grayDoor.mp3", "كم طولك يا روز؟ أنتِ تكبرين!": "assets/audio/dialogue/dlg_item_scale.mp3", "أرى السماء والأشجار!": "assets/audio/dialogue/dlg_item_window.mp3", "نجمة معلّقة جميلة!": "assets/audio/dialogue/dlg_item_star.mp3", "ورود وردية على الحائط!": "assets/audio/dialogue/dlg_item_flowers.mp3", "سجادة الورود الناعمة!": "assets/audio/dialogue/dlg_item_rug.mp3", "المصباح يضيء الغرفة!": "assets/audio/dialogue/dlg_item_pendant.mp3", "ابحثي عند السرير القريب من الخزانة الكبيرة": "assets/audio/dialogue/dlg_hint_bed1.mp3", "ابحثي عند السرير القريب من النافذة": "assets/audio/dialogue/dlg_hint_bed2.mp3", "ابحثي عند الطاولة الصغيرة بين السريرين": "assets/audio/dialogue/dlg_hint_table.mp3", "ابحثي في الخزانة ذات القلوب الوردية": "assets/audio/dialogue/dlg_hint_wardrobe3.mp3", "ابحثي في الخزانة الصغيرة بجانب النافذة": "assets/audio/dialogue/dlg_hint_wardrobe2.mp3", "ابحثي في الخزانة البيضاء الكبيرة": "assets/audio/dialogue/dlg_hint_bigWardrobe.mp3", "ابحثي عند مكتبك الوردي": "assets/audio/dialogue/dlg_hint_desk.mp3", "ابحثي عند الدبّ الصغير على المكتب": "assets/audio/dialogue/dlg_hint_teddy.mp3", "ابحثي في صناديق الألعاب فوق الخزانة": "assets/audio/dialogue/dlg_hint_bins.mp3", "ابحثي في السلة بجانب الباب الرمادي": "assets/audio/dialogue/dlg_hint_basket.mp3", "ليس هنا… جرّبي مكاناً آخر!": "assets/audio/reactions/rx_not_here_1.mp3", "اقتربتِ! ابحثي في مكانٍ آخر": "assets/audio/reactions/rx_not_here_2.mp3", "أنتِ رائعة! حاولي مرةً أخرى": "assets/audio/reactions/rx_not_here_3.mp3", "وجدنا النجمة هنا من قبل!": "assets/audio/reactions/rx_already_found.mp3", "وجدتِ النجمة الأولى! بقيت نجمتان": "assets/audio/reactions/rx_star1_left2.mp3", "وجدتِ النجمة الثانية! بقيت نجمة واحدة": "assets/audio/reactions/rx_star2_left1.mp3", "رائع! جمعتِ كل النجوم!": "assets/audio/celebrations/cel_all_stars.mp3", "انظري! صندوق الكنز يظهر": "assets/audio/celebrations/cel_chest_appears.mp3", "أحسنتِ يا روز! لقد وجدتِ الكنز!": "assets/audio/celebrations/cel_victory.mp3"};
 const VOICE_PENDING=new Set(['لنبحث في الأدراج!']); // recording not delivered yet: show the text, stay silent (no robot voice)
 const vbuf={};let vsrc=null,vloading=null,vWant=null;
 function voiceCtx(){actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}
@@ -881,7 +894,7 @@ let camTween=null;
 function startPose(){const a=camera.aspect,fov=45,t=Math.tan(fov*Math.PI/360),tgt=new THREE.Vector3(W/2-0.1,0.55,D/2),dir=new THREE.Vector3(1,1.3,1.35).normalize();
   const d=Math.min(10.5,2.9/(t*Math.min(1,a*1.1)));return{pos:tgt.clone().addScaledVector(dir,d),tgt,fov};}
 function chestPose(){const tgt=CHEST_POS.clone().setY(0.35),dir=new THREE.Vector3(0.8,0.9,1.3).normalize(),t=Math.tan(45*Math.PI/360),d=Math.min(8,1.5/(t*Math.min(1,camera.aspect)));return{pos:tgt.clone().addScaledVector(dir,d),tgt,fov:45};}
-function flyTo(p,instant){if(instant){camera.position.copy(p.pos);controls.target.copy(p.tgt);camera.fov=p.fov;camera.updateProjectionMatrix();camTween=null;return;}
+function flyTo(p,instant){document.getElementById('app').dataset.cam=p.ward?'ward':p.aq?'aq':'room';if(instant){camera.position.copy(p.pos);controls.target.copy(p.tgt);camera.fov=p.fov;camera.updateProjectionMatrix();camTween=null;return;}
   camTween={t0:performance.now(),from:{pos:camera.position.clone(),tgt:controls.target.clone(),fov:camera.fov},to:p};}
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 
@@ -893,7 +906,7 @@ function later(fn,ms){const id=setTimeout(fn,ms);pending.push(id);}
 function clearLater(){pending.forEach(clearTimeout);pending=[];}
 function renderTray(){tray.innerHTML=clues.map((_,i)=>`<div class="slot${i<found.length?' on':''}">${STAR_SVG}</div>`).join('');}
 function newGame(){clearLater();const p=POOL.slice();for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]];}
-  clues=p.slice(0,3);found=[];renderTray();resetWardrobes();chest.visible=false;confetti.visible=false;chest.userData.open=0;lid.rotation.x=0;chest.userData.glow.intensity=0;chest.userData.halo.material.opacity=0;roseReset();}
+  clues=p.slice(0,3);found=[];renderTray();resetWardrobes();aqReset();chest.visible=false;confetti.visible=false;chest.userData.open=0;lid.rotation.x=0;chest.userData.glow.intensity=0;chest.userData.halo.material.opacity=0;roseReset();}
 const nextClue=()=>clues.find(k=>!found.includes(k));
 function giveHint(){const k=nextClue();if(!k||state!=='play')return;say(ITEMS[k].hint);if(!roseTarget)roseDo('think');hintGlow.key=k;hintGlow.until=performance.now()+5000;lastAct=performance.now();}
 const CHEER=['ليس هنا… جرّبي مكاناً آخر!','اقتربتِ! ابحثي في مكانٍ آخر','أنتِ رائعة! حاولي مرةً أخرى'];let cheerI=0;
@@ -930,12 +943,16 @@ function updateChest(dt){if(!chest.visible)return;const u=chest.userData;
 const SPOT_SAY={top:'لنبحث في الرف العلوي!',middle:'لنبحث في الرف الأوسط!',bottom:'لنبحث في الرف السفلي!',hanging:'لنبحث بين الملابس المعلّقة!',drawers:'لنبحث في الأدراج!'};
 const DOOR_CLOSED_SAY='الباب مغلق، لنفتحه أولاً!';
 const WARD={},spotMeshes=[];let clueSpot={};
+/* soft rounded outline used to show a compartment can be searched */
+const hlTex=tex(256,256,(c,w,h)=>{c.clearRect(0,0,w,h);rrect(c,18,18,w-36,h-36,34);c.fillStyle='rgba(255,236,170,0.28)';c.fill();
+  c.shadowColor='rgba(255,196,60,1)';c.shadowBlur=22;c.lineWidth=12;c.strokeStyle='rgba(255,214,90,1)';c.stroke();c.shadowBlur=0;c.lineWidth=5;c.strokeStyle='rgba(255,250,225,1)';c.stroke();});
 (function buildWardrobes(){
   const IN=0xf1ede8,_b=new THREE.Box3(),_s=new THREE.Vector3(),_c=new THREE.Vector3();
   const info=m=>{_b.setFromObject(m);_b.getSize(_s);_b.getCenter(_c);return {size:_s.clone(),c:_c.clone(),min:_b.min.clone(),max:_b.max.clone()};};
   const silent=(o)=>{o.traverse(m=>{if(m.isMesh){m.castShadow=false;m.receiveShadow=true;}});return o;};
+  let sd=20261109;const r01=()=>((sd=(sd*16807)%2147483647)/2147483647);
   function mk(k,wall){const it=ITEMS[k];const body=it.meshes.reduce((a,m)=>info(m).size.length()>info(a).size.length()?m:a,it.meshes[0]);
-    const W={k,wall,it,body,doors:[],t:0,target:0,spots:[],extra:new THREE.Group(),carcass:new THREE.Group(),inside:new THREE.Group(),obs:[]};
+    const W={k,wall,it,body,doors:[],t:0,target:0,spots:[],extra:new THREE.Group(),carcass:new THREE.Group(),inside:new THREE.Group(),obs:[],revealed:false};
     W.extra.add(W.carcass,W.inside);W.extra.visible=false;scene.add(W.extra);WARD[k]=W;return W;}
   function door(W,meshes,hinge,angle,slide){meshes.forEach(m=>{m.userData.door=W.k;m.userData.q0=m.quaternion.clone();});W.doors.push({meshes,hinge,angle,slide});}
   function carcass(W,x0,x1,y0,y1,z0,z1,openSide,th=0.018){const m=W.body.material.clone();m.clippingPlanes=[];const p=W.carcass;
@@ -944,12 +961,51 @@ const WARD={},spotMeshes=[];let clueSpot={};
     add(x1-x0,th,z1-z0,cx,y1-th/2,cz);add(x1-x0,th,z1-z0,cx,y0+th/2,cz);
     if(openSide==='+x'){add(th,y1-y0,z1-z0,x0+th/2,cy,cz);add(x1-x0,y1-y0,th,cx,cy,z0+th/2);add(x1-x0,y1-y0,th,cx,cy,z1-th/2);}
     else{add(x1-x0,y1-y0,th,cx,cy,z0+th/2);add(th,y1-y0,z1-z0,x0+th/2,cy,cz);add(th,y1-y0,z1-z0,x1-th/2,cy,cz);}
-    silent(W.carcass);}
+    silent(W.carcass);return add;}
   function spot(W,id,kind,cx,cy,cz,w,h,face){const geo=face==='+x'?new THREE.BoxGeometry(0.05,h,w):new THREE.BoxGeometry(w,h,0.05);
     const me=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({colorWrite:false,depthWrite:false,transparent:true,opacity:0}));me.position.set(cx,cy,cz);
-    me.userData.spot={id,kind,k:W.k,look:new THREE.Vector3(cx,cy,cz)};me.visible=false;W.inside.add(me);pickables.push(me);spotMeshes.push(me);W.spots.push(me.userData.spot);}
+    me.userData.spot={id,kind,k:W.k,look:new THREE.Vector3(cx,cy,cz)};me.visible=false;W.inside.add(me);pickables.push(me);spotMeshes.push(me);W.spots.push(me.userData.spot);
+    /* highlight plane sitting just in front of the (unchanged) touch box */
+    const n=face==='+x'?new THREE.Vector3(1,0,0):new THREE.Vector3(0,0,1);
+    const hl=new THREE.Mesh(new THREE.PlaneGeometry(w+0.02,h+0.02),new THREE.MeshBasicMaterial({map:hlTex,transparent:true,opacity:0,depthWrite:false,toneMapped:false}));
+    hl.position.set(cx,cy,cz).addScaledVector(n,0.032);if(face==='+x')hl.rotation.y=Math.PI/2;hl.visible=false;hl.renderOrder=5;hl.userData.hl=true;W.inside.add(hl);
+    Object.assign(me.userData.spot,{n,face,hl,front:new THREE.Vector3(cx,cy,cz).addScaledVector(n,0.33)});}
   const M=(c,o)=>mat(c,Object.assign({roughness:.9},o||{}));
-  const fold=(p,x,y,z,w,h,d,c,face)=>{const m=RB(face==='+x'?d:w,h,face==='+x'?w:d,0.012,M(c),x,y,z,p);return m;};
+  /* --- decor helpers: a wardrobe "frame" maps (lateral, height, depth) to world axes --- */
+  const FR={'+z':{p:(l,y,d)=>new THREE.Vector3(l,y,d),s:(wl,h,dd)=>[wl,h,dd]},'+x':{p:(l,y,d)=>new THREE.Vector3(d,y,l),s:(wl,h,dd)=>[dd,h,wl]}};
+  let gid=0;const tag=(o,kind,id)=>{o.traverse(m=>{if(m.isMesh){m.userData[kind]=true;m.userData.gid=id;}});return o;};
+  const struct=o=>tag(o,'struct',-1);
+  function box(p,f,l,y,d,wl,h,dd,mt,r){const s=FR[f].s(wl,h,dd),q=FR[f].p(l,y,d);return RB(s[0],s[1],s[2],r==null?Math.min(0.012,h/2-0.003):r,mt,q.x,q.y,q.z,p);}
+  function stack(p,f,l,y0,d,wl,dd,cols){const id=++gid;let y=y0;cols.forEach((c,i)=>{const h=0.03+r01()*0.014,w=wl-r01()*0.014,dl=(r01()-0.5)*0.01,dz=(r01()-0.5)*0.012;
+      const mt=typeof c==='number'?M(c):c;tag(box(p,f,l+dl,y+h/2,d+dz,w,h,dd-0.01*r01(),mt,Math.min(0.014,h/2-0.002)),'decor',id);y+=h;});return y;}
+  function soft(p,f,l,y0,d,wl,h,dd,mt,r){const id=++gid;tag(box(p,f,l,y0+h/2,d,wl,h,dd,mt,r),'decor',id);return y0+h;}
+  function garment(p,f,l,yRail,d,color,len,kind,scale,mtOverride){const id=++gid,g=new THREE.Group(),q=FR[f].p(l,yRail,d);g.position.copy(q);g.rotation.y=f==='+z'?-Math.PI/2:0;g.scale.set(scale,1,1);p.add(g);
+    const mt=mtOverride||M(color,{roughness:.85}),hm=M(0xf4f1ee,{roughness:.5});
+    const hook=new THREE.Mesh(new THREE.TorusGeometry(0.0145,0.0025,6,14,Math.PI*1.35),hm);hook.rotation.z=-0.55;g.add(hook);
+    const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.0022,0.0022,0.022,6),hm);neck.position.y=-0.025;g.add(neck);
+    [-1,1].forEach(sg=>{const a=new THREE.Mesh(new THREE.BoxGeometry(0.146,0.006,0.008),hm);a.position.set(sg*0.07,-0.055,0);a.rotation.z=-sg*0.278;g.add(a);});
+    if(kind==='dress'){const b=new THREE.Mesh(rgeo(0.21,0.13,0.022,0.008),mt);b.position.y=-0.075-0.065;g.add(b);
+      const sk=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.165,len-0.13,22),mt);sk.scale.z=0.12;sk.position.y=-0.205-(len-0.13)/2;g.add(sk);}
+    else{const sh=new THREE.Mesh(rgeo(0.3,0.06,0.022,0.008),mt);sh.position.y=-0.105;g.add(sh);
+      const bd=new THREE.Mesh(rgeo(0.26,len-0.045,0.02,0.008),mt);bd.position.y=-0.12-(len-0.045)/2;g.add(bd);
+      const sl=Math.min(0.42,len*0.55);[-1,1].forEach(sg=>{const s=new THREE.Mesh(rgeo(0.058,sl,0.018,0.007),mt);s.position.set(sg*0.158,-0.1-sl/2+0.01,0);s.rotation.z=sg*0.12;g.add(s);});}
+    g.traverse(m=>{if(m.isMesh){m.castShadow=false;m.receiveShadow=true;}});tag(g,'decor',id);g.children.slice(0,4).forEach(m=>{m.userData.hanger=true;});return g;}
+  function handbag(p,f,l,ySh,d,wl,h,dd,c){const id=++gid,mt=M(c,{roughness:.45});tag(box(p,f,l,ySh+h/2,d,wl,h,dd,mt,0.02),'decor',id);
+    const hd=new THREE.Mesh(new THREE.TorusGeometry(wl*0.3,0.006,6,16,Math.PI),mt);const q=FR[f].p(l,ySh+h-0.004,d);hd.position.copy(q);if(f==='+x')hd.rotation.y=Math.PI/2;p.add(hd);tag(hd,'decor',id);}
+  function plush(p,f,l,ySh,d,c,c2){const id=++gid,mt=M(c,{roughness:1}),q=(yy,ll=l,dd=d)=>FR[f].p(ll,yy,dd),parts=[];
+    const add=(r,m,pos,sc)=>{const me=SP(r,m,0,0,0,p);me.position.copy(pos);if(sc)me.scale.set(...sc);parts.push(me);return me;};
+    add(0.065,mt,q(ySh+0.06),[1,0.92,0.9]);add(0.058,mt,q(ySh+0.165));
+    [-1,1].forEach(s=>add(0.022,M(c2,{roughness:1}),q(ySh+0.215,l+s*0.04)));add(0.024,M(0xfff3e6,{roughness:1}),q(ySh+0.155,l,d+0.05));
+    parts.forEach(m=>tag(m,'decor',id));}
+  function bin(p,f,l,ySh,d,wl,h,dd,lid,inner){const id=++gid;tag(box(p,f,l,ySh+h*0.36,d,wl-0.03,h*0.7,dd-0.03,M(inner,{roughness:.8}),0.02),'decor',id);
+    tag(box(p,f,l,ySh+h/2,d,wl,h,dd,M(0xeef3f7,{transparent:true,opacity:.42,roughness:.15}),0.012),'decor',id);tag(box(p,f,l,ySh+h+0.009,d,wl+0.008,0.018,dd+0.008,M(lid,{roughness:.5}),0.007),'decor',id);}
+  const floral=tex(128,128,(c,w,h)=>{c.fillStyle='#f6e7e4';c.fillRect(0,0,w,h);for(let i=0;i<34;i++){const x=r01()*w,y=r01()*h,s=4+r01()*4;flower(c,x,y,s,['#e8707a','#f19aa6','#e9a9b6'][i%3],'#fff3dc');c.fillStyle='#8fb08a';c.fillRect(x+s*0.6,y,3,2);}});
+  floral.wrapS=floral.wrapT=THREE.RepeatWrapping;floral.repeat.set(2,1);
+  const chevron=tex(128,128,(c,w,h)=>{c.fillStyle='#3c5674';c.fillRect(0,0,w,h);c.strokeStyle='#e9e4da';c.lineWidth=5;for(let y=-16;y<h+16;y+=22){c.beginPath();for(let x=0;x<=w;x+=16)c.lineTo(x,y+((x/16)%2?10:0));c.stroke();}});
+  chevron.wrapS=chevron.wrapT=THREE.RepeatWrapping;chevron.repeat.set(2,1);
+  const fleece=tex(128,128,(c,w,h)=>{c.fillStyle='#a9abb0';c.fillRect(0,0,w,h);c.fillStyle='#f3f2ef';for(let i=0;i<5;i++){const x=r01()*w,y=r01()*h;c.beginPath();c.moveTo(x,y);c.lineTo(x+22,y-18);c.lineTo(x+44,y);c.closePath();c.fill();}});
+  fleece.wrapS=fleece.wrapT=THREE.RepeatWrapping;
+  const TX=t=>M(0xffffff,{map:t,roughness:.95});
 
   /* --- big sliding wardrobe (wall 2): panel 2 slides behind panel 1 and shows the shelf unit + hanging section from the photo --- */
   {const W=mk('bigWardrobe',2);const ms=W.it.meshes.map(m=>[m,info(m)]);
@@ -957,60 +1013,82 @@ const WARD={},spotMeshes=[];let clueSpot={};
     ms.filter(([m,i])=>i.min.z>0.615&&!panel2.includes(m)).forEach(([m])=>{m.userData.doorish=true;});
     door(W,panel2,null,0,{dx:-0.47,dz:-0.03});
     const B=info(W.body);carcass(W,B.min.x,B.max.x,B.min.y,B.max.y,B.min.z,B.max.z,'+z');
-    const g=W.inside,wh=M(IN,{roughness:.6}),zf=0.6,zb=0.03,zc=(zf+zb)/2,zd=zf-zb,L=2.955,R=3.29,CX=3.122;
-    [L,R].forEach(x=>BX(0.018,2.2,zd,wh,x,1.2,zc,g));BX(0.018,1.03,zd,wh,CX,1.485,zc,g);
-    [0.40,0.97,1.32,1.68,2.0].forEach(y=>BX(R-L,0.018,zd,wh,(L+R)/2,y,zc,g));
+    const g=W.inside,wh=M(IN,{roughness:.6}),zf=0.6,zb=0.03,zc=(zf+zb)/2,zd=zf-zb,L=2.955,R=3.29,CX=3.122,F='+z';
+    [L,R].forEach(x=>struct(BX(0.018,2.2,zd,wh,x,1.2,zc,g)));struct(BX(0.018,1.03,zd,wh,CX,1.485,zc,g));
+    [0.40,0.97,1.32,1.68,2.0].forEach(y=>struct(BX(R-L,0.018,zd,wh,(L+R)/2,y,zc,g)));
     const knob=mat(0xc9ccd4,{metalness:.7,roughness:.3});
-    [0.495,0.685,0.875].forEach(y=>{RB(R-L-0.02,0.18,0.02,0.006,wh,(L+R)/2,y,zf-0.01,g);SP(0.012,knob,(L+R)/2,y,zf+0.008,g);});
-    [[3.03,0.2,0x6fc3c6],[3.2,0.18,0x7fb7d9]].forEach(([x,h,c])=>RB(0.13,h,0.2,0.01,M(c),x,0.1+h/2,0.45,g));
-    const cub=[[2.0,0.97],[1.32,1.32],[1.68,1.68]];
-    [[0x3d5a7a,0x6b4f3a,0x2f2f36],[0x5f7a3f,0x8a8f99,0x9c6a8f],[0xe9e4dc,0x2b2b30,0xd8a0b0]].forEach((cols,r)=>{const y0=[0.97,1.32,1.68][r];
-      [(L+CX)/2,(CX+R)/2].forEach((x,ci)=>{let y=y0+0.009;cols.forEach((c,j)=>{if((j+ci)%3===2&&r===2)return;const h=0.035+((j+r+ci)%2)*0.015;fold(g,x,y+h/2,0.36,0.13,h,0.28,(ci?cols[(j+1)%3]:c));y+=h;});});});
-    [[3.02,0x2a211d],[3.12,0x5b4636],[3.22,0x7a2a2f]].forEach(([x,c])=>{const s=SP(0.07,M(c,{roughness:.5}),x,2.07,0.33,g);s.scale.set(1,0.7,0.8);});
-    const strap=new THREE.Mesh(new THREE.TorusGeometry(0.07,0.008,6,20,Math.PI*1.2),M(0xb3262f,{roughness:.5}));strap.position.set(3.2,1.98,0.5);strap.rotation.z=Math.PI;g.add(strap);
-    CY(0.012,0.012,0.6,knob,3.58,2.0,0.32,g).rotation.z=Math.PI/2;
-    [[3.31,0x3c4a2e],[3.345,0x22303f],[3.38,0x5a5f66],[3.43,0x2d2d33],[3.5,0x41543a],[3.6,0x3a3f55],[3.7,0x6a4c3b]].forEach(([x,c],i)=>{
-      const h=0.85-(i%3)*0.12;RB(0.028,h,0.36,0.01,M(c),x,2.0-0.06-h/2,0.32,g);});
+    [0.505,0.69,0.875].forEach(y=>{struct(RB(R-L-0.024,0.17,0.02,0.006,wh,(L+R)/2,y,zf-0.01,g));struct(SP(0.012,knob,(L+R)/2,y,zf+0.008,g));});
+    /* bottom: two shoe/storage boxes standing on the wardrobe floor */
+    soft(g,F,3.04,0.098,0.40,0.12,0.17,0.22,M(0x6fc3c6,{roughness:.7}),0.008);soft(g,F,3.21,0.098,0.40,0.12,0.15,0.22,M(0x7fb7d9,{roughness:.7}),0.008);
+    /* cubbies: neat folded stacks resting on each shelf */
+    const xs=[(L+CX)/2,(CX+R)/2];
+    [[[0x3d5a7a,0x2f3f58,0x6b4f3a,0x8aa1b8],[0x22303f,0x3f5f86,0xa9bfd6]],
+     [[0x5f7a3f,0x8a8f99,0x6d6f75,0xc7cbd3],[0x2b3550,0xa8c5e4,0xe8eef5]],
+     [[0x26324a,0x6b4f3a,0xdfe3ea],[0x1e1e24,0xe6b4b0,0xd94f6a,0x3d6fb0]]].forEach((row,r)=>{const y0=[0.97,1.32,1.68][r]+0.009;
+      row.forEach((cols,ci)=>stack(g,F,xs[ci],y0,0.375,0.128,0.25,cols));});
+    /* top shelf: three handbags, as in the photo */
+    [[3.012,0.1,0.11,0.13,0x1f1c1e],[3.124,0.104,0.09,0.12,0x5b4636],[3.235,0.088,0.1,0.11,0xa3262f]].forEach(([x,w,h,d,c])=>handbag(g,F,x,2.009,0.36,w,h,d,c));
+    /* hanging section: rail just under the top, adult-size garments on hangers */
+    const rail=CY(0.011,0.011,0.575,knob,3.5925,2.14,0.32,g);rail.rotation.z=Math.PI/2;struct(rail);rail.userData.rail=true;
+    [[3.33,0x3c4a2e,0.92,'shirt'],[3.375,0x22303f,0.8,'shirt'],[3.42,0x5a5f66,0.86,'shirt'],[3.47,0x2d2d33,0.95,'shirt'],[3.53,0x41543a,0.78,'shirt'],[3.61,0x3a3f55,0.88,'shirt'],[3.7,0x6a4c3b,0.82,'shirt'],[3.79,0x5e6670,0.9,'shirt']]
+      .forEach(([x,c,len,kind])=>garment(g,F,x,2.14,0.32,c,len,kind,1.15));
     silent(g);
     spot(W,'big_top','top',(L+R)/2,2.155,0.56,0.33,0.29,'+z');spot(W,'big_middle','middle',(L+R)/2,1.485,0.56,0.33,1.0,'+z');
     spot(W,'big_drawers','drawers',(L+R)/2,0.685,0.56,0.33,0.56,'+z');spot(W,'big_bottom','bottom',(L+R)/2,0.25,0.56,0.33,0.29,'+z');
     spot(W,'big_hanging','hanging',3.35,1.45,0.56,0.12,1.05,'+z');
-    W.stand=new THREE.Vector3((L+R)/2+0.05,0,0.9);W.lookPt=new THREE.Vector3((L+R)/2+0.05,1.2,0.4);
-    W.view={tgt:new THREE.Vector3(3.17,1.22,0.5),dist:2.05,dir:new THREE.Vector3(0,0.42,1).normalize()};}
+    /* Rose stands beside the opening (in front of the closed panel) so she never hides the compartments */
+    W.stand=new THREE.Vector3(2.75,0,0.88);W.lookPt=new THREE.Vector3(3.12,1.2,0.4);
+    W.view={tgt:new THREE.Vector3(3.12,1.2,0.4),pos:new THREE.Vector3(3.85,1.85,2.45),fov:55,halfW:0.32,halfH:1.12};}
 
   /* --- wall-1 hinged wardrobes --- */
   function hinged(k,pairZ,hingeAngle){const W=mk(k,1);const ms=W.it.meshes.map(m=>[m,info(m)]);
     const fronts=ms.filter(([m,i])=>i.min.x>0.53&&m!==W.body&&i.size.y>0.01);return {W,fronts};}
-  /* by the window: 2 doors, hinges on the outer edges, shelves only */
+  /* by the window: 2 doors, hinges on the outer edges, shelves only (blankets, pillows, toys on top) */
   {const {W,fronts}=hinged('wardrobe2');const A=fronts.filter(([m,i])=>i.c.z<3.18).map(([m])=>m),Bm=fronts.filter(([m,i])=>i.c.z>=3.18).map(([m])=>m);
     const B=info(W.body);door(W,A,new THREE.Vector3(0.558,0,B.min.z+0.027),1.75);door(W,Bm,new THREE.Vector3(0.558,0,B.max.z-0.027),-1.75);
     carcass(W,B.min.x,B.max.x,B.min.y,B.max.y,B.min.z,B.max.z,'+x');
-    const g=W.inside,wh=M(IN,{roughness:.6}),x0=0.03,x1=0.53,xc=(x0+x1)/2,z0=B.min.z+0.02,z1=B.max.z-0.02,zc=(z0+z1)/2,zw=z1-z0;
-    [0.38,0.72,1.07,1.42,1.78].forEach(y=>BX(x1-x0,0.018,zw,wh,xc,y,zc,g));
-    const blob=(z,y,w,h,c)=>{const s=SP(0.5,M(c),0.3,y+h/2,z,g);s.scale.set(0.42,h,w);};
-    [[0.38,[[2.98,0.32,0.17,0x5d5f66],[3.32,0.36,0.2,0x3a4a6a]]],[0.72,[[2.98,0.36,0.24,0xeee9e0],[3.34,0.38,0.24,0xe7ddd0]]],
-     [1.07,[[2.97,0.3,0.22,0x1f2a52],[3.3,0.42,0.3,0xb9b9bd],[3.4,0.5,0.05,0xc8242b]]],[1.42,[[3.0,0.36,0.22,0x1f2a52],[3.36,0.36,0.16,0xd9e2ee]]],
-     [1.78,[[2.95,0.2,0.2,0xf3a6c0],[3.15,0.18,0.18,0x9fd0f0],[3.38,0.24,0.2,0xf0c66b]]]].forEach(([y,list])=>list.forEach(([z,w,h,c])=>blob(z,y+0.01,w,h,c)));
+    const g=W.inside,wh=M(IN,{roughness:.6}),x0=0.03,x1=0.53,xc=(x0+x1)/2,z0=B.min.z+0.02,z1=B.max.z-0.02,zc=(z0+z1)/2,zw=z1-z0,F='+x',D=0.27;
+    [0.38,0.72,1.07,1.42,1.78].forEach(y=>struct(BX(x1-x0,0.018,zw,wh,xc,y,zc,g)));
+    const s=y=>y+0.009,fl=B.min.y+0.018;
+    let y=soft(g,F,2.97,fl,D,0.36,0.085,0.38,TX(fleece),0.03);soft(g,F,2.97,y,D,0.35,0.08,0.37,M(0x6d6f78),0.03);
+    y=soft(g,F,3.37,fl,D,0.36,0.09,0.38,TX(chevron),0.03);soft(g,F,3.37,y,D,0.35,0.09,0.37,TX(chevron),0.03);
+    plush(g,F,2.92,s(0.38),D,0xf08aa0,0x8a5a3c);y=soft(g,F,3.36,s(0.38),D,0.36,0.1,0.38,M(0xece4d6),0.035);soft(g,F,3.36,y,D,0.34,0.09,0.36,M(0xe2d6c4),0.035);
+    soft(g,F,2.97,s(0.72),D-0.01,0.36,0.17,0.4,M(0xf7f4ee,{roughness:1}),0.07);soft(g,F,3.38,s(0.72),D-0.01,0.38,0.19,0.4,M(0xece5d8,{roughness:1}),0.075);
+    y=soft(g,F,2.97,s(1.07),D,0.36,0.12,0.38,M(0x1f2a52),0.045);soft(g,F,2.97,y,D,0.34,0.11,0.36,M(0x26346a),0.045);
+    y=soft(g,F,3.38,s(1.07),D,0.4,0.05,0.38,M(0xc8242b),0.02);soft(g,F,3.38,y,D,0.38,0.17,0.37,TX(fleece),0.06);
+    soft(g,F,3.0,s(1.42),D,0.34,0.2,0.38,M(0x1f2a52,{roughness:1}),0.08);
+    {const id=++gid,b=SP(0.5,M(0x9fcbe8,{transparent:true,opacity:.8,roughness:.3}),0,0,0,g);b.position.set(D,s(1.42)+0.07,3.35);b.scale.set(0.3,0.14,0.22);tag(b,'decor',id);}
+    bin(g,F,2.95,s(1.78),D,0.24,0.2,0.34,0xf3a6c0,0xf7d36b);plush(g,F,3.28,s(1.78),D,0x9fd0f0,0x6aa8d8);soft(g,F,3.5,s(1.78),D,0.1,0.16,0.26,M(0xf0c66b,{roughness:.6}),0.01);
     silent(g);
     spot(W,'w2_top','top',0.5,1.96,zc,zw,0.36,'+x');spot(W,'w2_middle','middle',0.5,1.42,zc,zw,0.7,'+x');spot(W,'w2_bottom','bottom',0.5,0.56,zc,zw,1.0,'+x');
-    W.stand=new THREE.Vector3(0.95,0,zc);W.lookPt=new THREE.Vector3(0.3,1.1,zc);W.view={tgt:new THREE.Vector3(0.45,1.12,zc),dist:2.0,dir:new THREE.Vector3(1,0.42,0).normalize()};}
+    W.stand=new THREE.Vector3(1.3,0,2.93);W.lookPt=new THREE.Vector3(0.3,1.1,zc);
+    W.view={tgt:new THREE.Vector3(0.3,1.12,zc),pos:new THREE.Vector3(2.6,1.35,3.62),fov:52,halfW:0.47,halfH:1.08};}
   /* by the door: the two doors on the door side open as a pair (hinges on their outer edges); the third door stays closed */
   {const {W,fronts}=hinged('wardrobe3');const d1=fronts.filter(([m,i])=>i.c.z<1.88).map(([m])=>m),d2=fronts.filter(([m,i])=>i.c.z>=1.88&&i.c.z<2.29).map(([m])=>m);
     fronts.filter(([m,i])=>i.c.z>=2.29).forEach(([m])=>{m.userData.doorish=false;});
     const B=info(W.body),zA=B.min.z+0.027,zB=2.283;door(W,d1,new THREE.Vector3(0.558,0,zA),1.75);door(W,d2,new THREE.Vector3(0.558,0,zB),-1.75);
-    carcass(W,B.min.x,B.max.x,B.min.y,B.max.y,B.min.z,2.292,'+x');
-    const g=W.inside,wh=M(IN,{roughness:.6}),wood=M(0xc9a27a,{roughness:.7}),x0=0.03,x1=0.53,xc=(x0+x1)/2,z0=B.min.z+0.02,z1=2.275,zc=(z0+z1)/2,zw=z1-z0;
-    BX(x1-x0,0.018,zw,wh,xc,1.80,zc,g);BX(x1-x0,0.022,zw,wood,xc,0.62,zc,g);
-    CY(0.012,0.012,zw,mat(0xeeeeee,{metalness:.3,roughness:.4}),0.3,1.70,zc,g).rotation.x=Math.PI/2;
-    [[0x1d1d22],[0xe2b33a],[0x1f1f25],[0x7aa0e0],[0xf08aa8],[0xf4c3cf],[0xd9e6c8],[0xc9b7a8],[0x9ab7d8],[0x7a1f2a],[0x4e7a3a]].forEach(([c],i)=>{
-      const z=z0+0.05+i*(zw-0.1)/10,h=0.55+(i%3)*0.1;RB(0.34,h,0.025,0.01,M(c),0.3,1.68-h/2,z,g);});
-    [[1.62,0.12,0xd8c8e8],[1.86,0.14,0xf2ede2],[2.1,0.12,0xe9c9d2]].forEach(([z,h,c])=>RB(0.34,h,0.22,0.02,M(c),0.3,0.632+h/2,z,g));
-    [[1.66,0.2,0xf0b2b8],[2.06,0.17,0xc9d6e8]].forEach(([z,h,c])=>RB(0.34,h,0.3,0.02,M(c),0.3,0.09+h/2,z,g));
-    [[1.62,0xf3a6c0],[1.9,0xf6d36b],[2.14,0xbfe3f0]].forEach(([z,c])=>RB(0.3,0.16,0.2,0.02,M(c,{roughness:.5}),0.3,1.81+0.08,z,g));
+    const addC=carcass(W,B.min.x,B.max.x,B.min.y,B.max.y,B.min.z,2.292,'+x');
+    /* the third (closed) section keeps a solid body, so nothing on top of the wardrobe is left floating when the body swaps */
+    addC(B.max.x-B.min.x-0.012,B.max.y-B.min.y,B.max.z-2.292,(B.min.x+B.max.x-0.012)/2,(B.min.y+B.max.y)/2,(2.292+B.max.z)/2);silent(W.carcass);
+    const g=W.inside,wh=M(IN,{roughness:.6}),wood=M(0xc9a27a,{roughness:.7}),x0=0.03,x1=0.53,xc=(x0+x1)/2,z0=B.min.z+0.02,z1=2.275,zc=(z0+z1)/2,zw=z1-z0,F='+x',D=0.28;
+    struct(BX(x1-x0,0.018,zw,wh,xc,1.80,zc,g));struct(BX(x1-x0,0.022,zw,wood,xc,0.62,zc,g));
+    const rail=CY(0.012,0.012,zw,mat(0xeeeeee,{metalness:.3,roughness:.4}),0.3,1.70,zc,g);rail.rotation.x=Math.PI/2;struct(rail);rail.userData.rail=true;
+    /* kids' clothes on hangers (colours from the photo) */
+    const floralM=TX(floral);
+    [[0x1d1d22,'shirt',0.5],[0xe2b33a,'dress',0.58],[0x1f1f25,'dress',0.55],[0x7aa0e0,'dress',0.6],[0xf08aa8,'dress',0.52],[null,'dress',0.56],[0xd9e6c8,'dress',0.5],
+     [0xc9b7a8,'dress',0.54],[0x9ab7d8,'shirt',0.46],[0x7a1f2a,'shirt',0.5],[0x4e7a3a,'shirt',0.52]].forEach(([c,kind,len],i)=>{
+      const z=z0+0.045+i*(zw-0.09)/10;garment(g,F,z,1.70,0.3,c||0xffffff,len,kind,0.9,c==null?floralM:null);});
+    /* wooden shelf: towel stacks; floor: folded fabrics */
+    const ys=0.62+0.011;
+    stack(g,F,1.62,ys,D,0.22,0.3,[0xd8c8e8,0xc9b3dd,0xf2ede2,0xf2ede2]);stack(g,F,1.88,ys,D,0.22,0.3,[0x5a5c62,0x8a8d93,0xc9cbd0,0xe8c8cc]);stack(g,F,2.13,ys,D,0.22,0.3,[0xf4efe6,0xe9e1d3,0xf0d4d8,0xf7f4ee]);
+    const fl=B.min.y+0.018;stack(g,F,1.7,fl,D,0.3,0.3,[floralM,floralM,0xf2ede4,floralM,0xe9b1b6]);stack(g,F,2.09,fl,D,0.3,0.3,[0xc9d6e8,0xf0b2b8,0xe8e3da,0xd4dde8,0xf0b2b8,0xc9d6e8]);
+    /* top shelf: clear toy bins with coloured lids */
+    [[1.63,0xc9a6e8,0xf3a6c0],[1.885,0xf3a6c0,0xf6d36b],[2.14,0x9fd0f0,0xbfe3f0]].forEach(([z,lid,inner])=>bin(g,F,z,1.809,D,0.22,0.16,0.3,lid,inner));
     silent(g);
     spot(W,'w3_top','top',0.5,1.915,zc,zw,0.23,'+x');spot(W,'w3_hanging','hanging',0.5,1.32,zc,zw,0.74,'+x');
     spot(W,'w3_middle','middle',0.5,0.79,zc,zw,0.32,'+x');spot(W,'w3_bottom','bottom',0.5,0.35,zc,zw,0.52,'+x');
-    W.stand=new THREE.Vector3(0.95,0,zc);W.lookPt=new THREE.Vector3(0.3,1.1,zc);W.view={tgt:new THREE.Vector3(0.45,1.12,zc),dist:2.0,dir:new THREE.Vector3(1,0.42,0).normalize()};}
+    W.stand=new THREE.Vector3(1.3,0,1.62);W.lookPt=new THREE.Vector3(0.3,1.1,zc);
+    W.view={tgt:new THREE.Vector3(0.3,1.05,zc),pos:new THREE.Vector3(2.6,1.35,2.38),fov:52,halfW:0.43,halfH:1.0};}
 
   // open-door footprints become temporary nav obstacles
   Object.values(WARD).forEach(W=>{applyDoors(W,1);W.obs=W.doors.filter(d=>!d.slide).map(d=>{const bb=new THREE.Box3();d.meshes.forEach(m=>bb.union(new THREE.Box3().setFromObject(m)));return bb;});applyDoors(W,0);});
@@ -1019,35 +1097,225 @@ function applyDoors(W,e){W.doors.forEach(d=>{const q=new THREE.Quaternion().setF
   d.meshes.forEach(m=>{const p0=m.userData.p0;
     if(d.slide){const k=Math.min(1,e*5);m.position.set(p0.x+d.slide.dx*Math.max(0,(e-0.12)/0.88),p0.y,p0.z+d.slide.dz*k);m.quaternion.copy(m.userData.q0);}
     else{const v=p0.clone().sub(d.hinge).applyQuaternion(q);m.position.copy(d.hinge).add(v);m.quaternion.copy(q).multiply(m.userData.q0);}});});}
-function wardNav(){NAV_EXTRA.length=0;Object.values(WARD).forEach(W=>{if(W.target>0)NAV_EXTRA.push(...W.obs);});NAV.rebuild();}
+function wardNav(){NAV_EXTRA.length=0;NAV_EXTRA.push(...NAV_FIXED);Object.values(WARD).forEach(W=>{if(W.target>0)NAV_EXTRA.push(...W.obs);});NAV.rebuild();}
 function syncWardCuts(){const s=(cutKey||'false,false,false,false').split(',').map(v=>v==='true');Object.values(WARD).forEach(W=>setCut(W.extra,s[W.wall-1]));}
 function setWardOpen(W,open,instant){W.target=open?1:0;if(instant){W.t=W.target;applyDoors(W,W.t);}wardNav();refreshWard(W);}
-function refreshWard(W){const on=W.t>0.001;W.body.visible=!on;W.extra.visible=on;spotMeshes.forEach(m=>{if(m.userData.spot.k===W.k)m.visible=W.t>0.98;});}
+function refreshWard(W){const on=W.t>0.001;W.body.visible=!on;W.extra.visible=on;spotMeshes.forEach(m=>{if(m.userData.spot.k===W.k)m.visible=W.t>0.98;});
+  if(W.t>=1&&!W.revealed){W.revealed=true;W.spots.forEach((s,i)=>flashSpot(s,0xfff4d0,0.55,0.9,0.15+i*0.12));} // show once which areas can be searched
+  if(W.t<=0)W.revealed=false;}
 function updateWardrobes(dt){Object.values(WARD).forEach(W=>{if(W.t===W.target)return;const s=dt/0.65;W.t=W.target>W.t?Math.min(W.target,W.t+s):Math.max(W.target,W.t-s);
   applyDoors(W,ease(W.t));refreshWard(W);});}
-function wardView(W){const t=Math.tan(45*Math.PI/360),a=camera.aspect;const d=Math.min(4.2,Math.max(W.view.dist,(W.k==='bigWardrobe'?0.75:1.05)/(2*t*Math.min(1,a))));
-  return {pos:W.view.tgt.clone().addScaledVector(W.view.dir,d),tgt:W.view.tgt.clone(),fov:45};}
-const spotRing=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffe7a0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));spotRing.scale.set(0.35,0.35,1);scene.add(spotRing);let spotRingT=0;
-function pulseSpot(p){spotRing.position.copy(p);spotRingT=1;}
-function updateSpotRing(dt){if(spotRingT<=0)return;spotRingT=Math.max(0,spotRingT-dt/1.2);spotRing.material.opacity=Math.sin(spotRingT*Math.PI)*0.9;spotRing.scale.setScalar(0.3+0.25*(1-spotRingT));}
+/* camera: lower, beside Rose (she stands at the side), widened only as much as the screen needs to show the whole interior */
+/* the interior is framed inside the free band of the screen: below the top bar (stars/buttons) and above the speech bubble */
+function hudBand(){const H=canvas.clientHeight||innerHeight,tb=document.querySelector('.top');const top=Math.min(H*0.25,(tb?tb.getBoundingClientRect().bottom:70)+10),bot=Math.min(H*0.2,118);return {H,top,bot};}
+function framedView(v,maxD){const dir=v.pos.clone().sub(v.tgt);let d=dir.length();dir.normalize();const th=Math.tan(v.fov*Math.PI/360),a=camera.aspect,b=hudBand(),u=Math.max(0.5,(b.H-b.top-b.bot)/b.H);
+  d=Math.min(maxD,Math.max(d,v.halfW/(th*a)+0.15,v.halfH/(th*u)+0.1));
+  const aim=v.tgt.clone();aim.y+=((b.top-b.bot)/b.H)*th*d; // centre the interior in the free band
+  const pos=aim.clone().addScaledVector(dir,d);pos.x=Math.min(W_ROOM.x1,Math.max(W_ROOM.x0,pos.x));pos.z=Math.min(W_ROOM.z1,Math.max(W_ROOM.z0,pos.z));return {pos,tgt:aim,fov:v.fov};}
+/* desktop / wide screens: the big wardrobe keeps its original close camera (the bed rail must not hide the bottom shelf); the HUD-aware framing is used on phones only */
+function wideScreen(){return camera.aspect>=1&&(canvas.clientWidth||innerWidth)>=700;}
+/* camera of the previous version (no HUD offset) */
+function plainView(v,maxD){const dir=v.pos.clone().sub(v.tgt);let d=dir.length();dir.normalize();const th=Math.tan(v.fov*Math.PI/360),a=camera.aspect;
+  d=Math.min(maxD,Math.max(d,v.halfW/(th*a)+0.15,v.halfH/th+0.1));const pos=v.tgt.clone().addScaledVector(dir,d);
+  pos.x=Math.min(W_ROOM.x1,Math.max(W_ROOM.x0,pos.x));pos.z=Math.min(W_ROOM.z1,Math.max(W_ROOM.z0,pos.z));return {pos,tgt:v.tgt.clone(),fov:v.fov};}
+function wardView(W){const v=(W.k==='bigWardrobe'&&wideScreen())?plainView(W.view,4.6):framedView(W.view,4.6);v.ward=true;return v;}
+const W_ROOM={x0:0.25,x1:W-0.25,z0:0.25,z1:D-0.25};
+/* highlight animations (touch feedback, first-open reveal, star found) */
+const hlAnims=[];
+function flashSpot(s,color,peak,dur,delay){hlAnims.push({s,color,peak,dur,t:-(delay||0)});}
+function pulseSpot(p){} // kept for compatibility; the compartment highlight replaces the old glow dot
+function updateSpotRing(dt){for(let i=hlAnims.length-1;i>=0;i--){const a=hlAnims[i];a.t+=dt;const m=a.s.hl;if(a.t<0)continue;const k=a.t/a.dur;
+  if(k>=1){m.material.opacity=0;m.visible=false;hlAnims.splice(i,1);continue;}m.visible=true;m.material.color.setHex(a.color);m.material.opacity=a.peak*Math.sin(Math.PI*Math.min(1,k*1.15));}}
 function wardrobeTap(k,obj){const W=WARD[k];lastAct=performance.now();flash(k);SFX.tap();
   if(W.target===1&&obj&&obj.userData.door){say(ITEMS[k].say);setWardOpen(W,false);return;}            // tap an open door: close it
   if(W.target===1){say(ITEMS[k].say);flyTo(wardView(W));return;}
   const isDoor=!!(obj&&(obj.userData.door||obj.userData.doorish));
   say(isDoor?ITEMS[k].say:DOOR_CLOSED_SAY);if(hintGlow.key===k)hintGlow.until=0;
   walkTo(W.stand,W.lookPt,'reach',()=>{setWardOpen(W,true);flyTo(wardView(W));});}
-function spotTap(s){const W=WARD[s.k];lastAct=performance.now();SFX.tap();pulseSpot(s.look);
+function spotTap(s){const W=WARD[s.k];lastAct=performance.now();SFX.tap();
   if(W.target!==1){say(DOOR_CLOSED_SAY);return;}
-  const stand=new THREE.Vector3(s.look.x,0,s.look.z);const wt=walkTo(stand,s.look,'search');
+  flashSpot(s,0xffe28a,0.85,0.75,0);
+  const wt=walkTo(W.stand,s.look,'search');
   say(SPOT_SAY[s.kind]);if(state!=='play')return;
   const isClue=clues.includes(s.k)&&clueSpot[s.k]===s.id,already=found.includes(s.k);
-  if(isClue&&!already){found.push(s.k);awardStar(s.look.clone().setY(s.look.y+0.2),Math.max(1600,wt*1000+1500));}
+  if(isClue&&!already){found.push(s.k);const d=Math.max(1600,wt*1000+1500);awardStar(s.front.clone().setY(s.look.y+0.05),d);later(()=>flashSpot(s,0xffc93c,1,1.6,0),d);}
   else if(already&&clueSpot[s.k]===s.id){later(()=>say('وجدنا النجمة هنا من قبل!'),1600);}
   else later(()=>{SFX.nope();say(CHEER[cheerI++%CHEER.length]);},Math.max(1700,wt*1000+1300));}
 function resetWardrobes(){clueSpot={};clues.forEach(k=>{const W=WARD[k];if(W)clueSpot[k]=W.spots[Math.floor(Math.random()*W.spots.length)].id;});
-  Object.values(WARD).forEach(W=>setWardOpen(W,false,true));spotRingT=0;spotRing.material.opacity=0;}
+  Object.values(WARD).forEach(W=>{setWardOpen(W,false,true);W.revealed=false;});hlAnims.length=0;spotMeshes.forEach(m=>{const h=m.userData.spot.hl;h.visible=false;h.material.opacity=0;});}
 syncWardCuts();
 
+/* ---------- 9c. aquarium corner (new furniture, approved: location A, between the window-side wardrobe and the window wall) ----------
+   Black cabinet 50 x 32 x 45 cm (x 0.04-0.54, z 3.66-3.98) with a grey fluffy mat, tank 27 x 18 x 26 cm on top facing the room (+x),
+   food bowl beside it. Nothing of the approved room is moved: this only adds meshes, one short-range light and one nav obstacle. */
+const AQ_SAY={hello:'واو يا روز! انظري إلى السمكة الجميلة!',feed:'هيا نُطعم السمكة!',yum:'بالهناء والشفاء يا سمكتي!',light:'هيا نغيّر لون الضوء!'};
+const NAV_FIXED=[];
+const AQ=(function buildAquarium(){
+  const g=new THREE.Group();g.name='aquarium';scene.add(g);
+  const A={g,mode:false,feedReady:0,pellets:[],bubbles:[],colorIdx:0,said:{},stand:new THREE.Vector3(0.86,0,3.2),look:new THREE.Vector3(0.17,0.58,3.82)};
+  const M=(c,o)=>mat(c,Object.assign({roughness:.6},o||{}));
+  const pick=(m,kind)=>{m.userData.aqua=kind;pickables.push(m);return m;};
+  /* cabinet + mat */
+  const cab=RB(0.5,0.45,0.32,0.012,M(0x1f1f23,{roughness:.45}),0.29,0.225,3.82,g);pick(cab,'tank');
+  RB(0.006,0.38,0.27,0.003,M(0x2c2c31,{roughness:.4}),0.542,0.235,3.82,g);                 // door panel on the side facing the room
+  SP(0.008,mat(0xb9bcc4,{metalness:.7,roughness:.3}),0,0,0,g).position.set(0.548,0.33,3.73);
+  const furB=tex(128,128,(c,w,h)=>{c.fillStyle='#808080';c.fillRect(0,0,w,h);for(let i=0;i<900;i++){const v=90+Math.random()*120|0;c.fillStyle=`rgb(${v},${v},${v})`;c.fillRect(Math.random()*w,Math.random()*h,1,3+Math.random()*4);}},false);
+  furB.wrapS=furB.wrapT=THREE.RepeatWrapping;furB.repeat.set(3,3);
+  pick(RB(0.48,0.022,0.3,0.01,M(0x8d8f96,{roughness:1,bumpMap:furB,bumpScale:0.004}),0.29,0.461,3.82,g),'tank');
+  const Y0=0.472;                                                    // top of the mat
+  /* tank: 18 cm deep (x 0.08-0.26), 27 cm wide (z 3.685-3.955), glass 21 cm + lid 5 cm */
+  const X0=0.08,X1=0.26,Z0=3.685,Z1=3.955,GH=0.21,XC=(X0+X1)/2,ZC=(Z0+Z1)/2;A.box={X0,X1,Z0,Z1,Y0,GH};
+  RB(X1-X0+0.006,0.006,Z1-Z0+0.006,0.002,M(0xd9dde3,{roughness:.3}),XC,Y0+0.003,ZC,g);   // clear base plate
+  const glassM=new THREE.MeshStandardMaterial({color:0xdff3ff,transparent:true,opacity:.16,roughness:.05,metalness:0,depthWrite:false,side:THREE.DoubleSide});
+  const glass=new THREE.Mesh(new THREE.BoxGeometry(X1-X0,GH,Z1-Z0),glassM);glass.position.set(XC,Y0+0.006+GH/2,ZC);glass.renderOrder=3;g.add(pick(glass,'tank'));
+  const edges=new THREE.LineSegments(new THREE.EdgesGeometry(glass.geometry),new THREE.LineBasicMaterial({color:0xf2f8ff,transparent:true,opacity:.55}));edges.position.copy(glass.position);g.add(edges);
+  const WY=Y0+0.006+GH*0.8;A.waterY=WY;                                   // water line at ~80 % like the photo
+  const waterM=new THREE.MeshStandardMaterial({color:0xcfe9f5,transparent:true,opacity:.2,roughness:.1,depthWrite:false,emissive:0x000000});
+  const water=new THREE.Mesh(new THREE.BoxGeometry(X1-X0-0.008,WY-Y0-0.01,Z1-Z0-0.008),waterM);water.position.set(XC,(Y0+0.006+WY)/2,ZC);water.renderOrder=2;g.add(water);
+  const surf=new THREE.Mesh(new THREE.PlaneGeometry(X1-X0-0.008,Z1-Z0-0.008,8,10),new THREE.MeshStandardMaterial({color:0xe8f6ff,transparent:true,opacity:.35,roughness:.05,depthWrite:false,side:THREE.DoubleSide}));
+  surf.rotation.x=-Math.PI/2;surf.position.set(XC,WY,ZC);surf.renderOrder=4;g.add(surf);A.surf=surf;A.surf0=surf.geometry.attributes.position.array.slice();
+  /* lid: white, black band, LED strip underneath, temperature display on top (23 °C) */
+  const LY=Y0+0.006+GH;
+  RB(X1-X0+0.014,0.014,Z1-Z0+0.014,0.004,M(0xf3f2f0,{roughness:.35}),XC,LY+0.007,ZC,g);
+  RB(X1-X0+0.016,0.012,Z1-Z0+0.016,0.004,M(0x18181b,{roughness:.3}),XC,LY+0.02,ZC,g);
+  const lidTop=RB(X1-X0+0.016,0.024,Z1-Z0+0.016,0.008,M(0xf6f5f3,{roughness:.35}),XC,LY+0.038,ZC,g);pick(lidTop,'light');
+  const disp=tex(256,96,(c,w,h)=>{c.fillStyle='#0d0d12';c.fillRect(0,0,w,h);c.font='bold 54px monospace';c.fillStyle='#3d6bff';c.fillText('23°C',70,66);
+    [['#ff5a3c',14,30],['#ffd23c',30,46],['#46e070',14,58]].forEach(([col,x,y])=>{c.fillStyle=col;c.fillRect(x,y,14,14);});c.fillStyle='#ff9a3c';c.font='bold 14px sans-serif';c.fillText('TEMP',190,30);});
+  const dsp=new THREE.Mesh(new THREE.PlaneGeometry(0.075,0.028),new THREE.MeshBasicMaterial({map:disp,toneMapped:false}));dsp.rotation.x=-Math.PI/2;dsp.rotation.z=Math.PI/2;dsp.position.set(XC,LY+0.0505,ZC);g.add(dsp);
+  const ledM=new THREE.MeshBasicMaterial({color:0xf2f6ff,toneMapped:false});const led=new THREE.Mesh(new THREE.BoxGeometry(X1-X0-0.03,0.003,Z1-Z0-0.03),ledM);led.position.set(XC,LY-0.002,ZC);g.add(led);
+  const lamp=new THREE.PointLight(0xf2f6ff,0.55,0.75,2);lamp.position.set(XC+0.02,LY-0.03,ZC);g.add(lamp);A.lamp=lamp;A.led=ledM;A.waterM=waterM;
+  /* gravel: black pebbles, higher mound at the front-left (like the photo) — one instanced draw call */
+  const GN=1100,gGeo=new THREE.IcosahedronGeometry(1,1),gM=M(0x2b2e33,{roughness:.55}),grav=new THREE.InstancedMesh(gGeo,gM,GN);const o=new THREE.Object3D();
+  A.gravelTop=(x,z)=>Y0+0.018+0.016*Math.max(0,(z-ZC)/(Z1-Z0)*2)*Math.max(0,(x-X0)/(X1-X0));
+  for(let i=0;i<GN;i++){const x=X0+0.006+Math.random()*(X1-X0-0.012),z=Z0+0.006+Math.random()*(Z1-Z0-0.012),top=A.gravelTop(x,z);const r=0.0026+Math.random()*0.0016;
+    o.position.set(x,Y0+0.008+Math.random()*(top-Y0-0.01),z);o.scale.set(r,r*0.85,r);o.rotation.set(Math.random()*3,Math.random()*3,0);o.updateMatrix();grav.setMatrixAt(i,o.matrix);}
+  grav.receiveShadow=true;g.add(grav);
+  /* filter (viewer's left = +z) and outlet tube (viewer's right = -z) */
+  const grey=M(0x5d6168,{roughness:.5});RB(0.05,0.17,0.045,0.006,grey,X0+0.035,Y0+0.1,Z1-0.03,g);RB(0.06,0.04,0.055,0.006,M(0x6d7178),X0+0.04,WY-0.005,Z1-0.035,g);
+  CY(0.0045,0.0045,0.03,grey,X0+0.075,WY-0.012,Z1-0.035,g,10).rotation.z=Math.PI/2;
+  const tube=CY(0.009,0.009,GH*0.85,new THREE.MeshStandardMaterial({color:0xe6f3fb,transparent:true,opacity:.45,roughness:.1,depthWrite:false}),X0+0.025,Y0+0.006+GH*0.45,Z0+0.025,g,12);tube.renderOrder=3;
+  /* clay pot lying on its side (opening towards the front-left) + driftwood over it */
+  const prof=[[0.012,0],[0.03,0.005],[0.036,0.02],[0.037,0.045],[0.032,0.065],[0.026,0.072],[0.027,0.078]].map(([r,y])=>new THREE.Vector2(r,y));
+  const potM=M(0xd9946a,{roughness:.9,side:THREE.DoubleSide});const pot=new THREE.Mesh(new THREE.LatheGeometry(prof,22),potM);
+  const POT={c:new THREE.Vector3(XC+0.01,Y0+0.052,ZC-0.035),r:0.04};pot.position.set(POT.c.x-0.025,POT.c.y,POT.c.z+0.03);
+  pot.rotation.order='YXZ';pot.rotation.set(0,Math.PI*0.5+1.02,Math.PI/2);g.add(pot);pot.castShadow=true;
+  const potBack=new THREE.Mesh(new THREE.CircleGeometry(0.012,16),M(0x6b3a24));g.add(potBack);
+  pot.updateMatrixWorld(true);const axis=new THREE.Vector3(0,1,0).applyQuaternion(pot.quaternion).normalize();A.potMouth=pot.position.clone().addScaledVector(axis,0.08);A.potOut=pot.position.clone().addScaledVector(axis,0.095);A.potIn=pot.position.clone().addScaledVector(axis,0.04);
+  potBack.position.copy(pot.position).addScaledVector(axis,0.002);potBack.lookAt(A.potMouth);A.potAxis=axis;A.potBase=pot.position.clone();POT.c.copy(pot.position).addScaledVector(axis,0.039);
+  const wood=new THREE.CatmullRomCurve3([new THREE.Vector3(XC+0.03,Y0+0.012,ZC-0.105),new THREE.Vector3(XC,Y0+0.07,ZC-0.085),new THREE.Vector3(XC-0.005,Y0+0.1,ZC-0.035),new THREE.Vector3(XC+0.02,Y0+0.105,ZC+0.02),new THREE.Vector3(XC+0.04,Y0+0.09,ZC+0.03)]);
+  const wd=new THREE.Mesh(new THREE.TubeGeometry(wood,24,0.0075,7,false),M(0x5a3426,{roughness:.95}));wd.castShadow=true;g.add(wd);
+  /* white stones + small round-leaf plant at the front-left */
+  [[XC+0.05,Z1-0.035,0.017],[XC+0.025,Z1-0.03,0.013],[XC+0.065,Z1-0.06,0.011]].forEach(([x,z,r])=>{const s=SP(r,M(0xf1ece2,{roughness:.8}),x,A.gravelTop(x,z)+r*0.5,z,g);s.scale.set(1.3,0.7,1);});
+  const stemM=M(0x5f9a3c),leafM=M(0x7fcf5a,{side:THREE.DoubleSide});
+  [[0.05,0.3],[0.06,-0.4],[0.042,0.9]].forEach(([h,a],i)=>{const st=CY(0.0012,0.0012,h,stemM,XC+0.05,A.gravelTop(XC+0.05,Z1-0.07)+h/2,Z1-0.07,g,5);st.rotation.set(0,0,a*0.3);
+    const lf=new THREE.Mesh(new THREE.CircleGeometry(0.009,12),leafM);lf.position.set(XC+0.05+Math.sin(a*0.3)*-h/2,A.gravelTop(XC+0.05,Z1-0.07)+h,Z1-0.07+(i-1)*0.006);lf.rotation.set(-1.1,a,0);g.add(lf);});
+  /* fish: bright pink tetra (~4 cm), translucent fins */
+  const fish=new THREE.Group();g.add(fish);A.fish=fish;
+  const fM=new THREE.MeshStandardMaterial({color:0xff3f93,emissive:0x5c0b33,roughness:.35});const finM=new THREE.MeshStandardMaterial({color:0xffb6d6,transparent:true,opacity:.6,side:THREE.DoubleSide,roughness:.4,emissive:0x40122a});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),fM);body.scale.set(0.019,0.011,0.0055);fish.add(body);
+  const tail=new THREE.Group();tail.position.x=-0.017;fish.add(tail);const ts=new THREE.Shape();ts.moveTo(0,0);ts.lineTo(-0.016,0.011);ts.quadraticCurveTo(-0.011,0,-0.016,-0.011);ts.lineTo(0,0);
+  tail.add(new THREE.Mesh(new THREE.ShapeGeometry(ts),finM));
+  const ds=new THREE.Shape();ds.moveTo(-0.004,0.008);ds.lineTo(0.002,0.018);ds.lineTo(0.008,0.009);const dorsal=new THREE.Mesh(new THREE.ShapeGeometry(ds),finM);fish.add(dorsal);
+  const as=new THREE.Shape();as.moveTo(-0.012,-0.006);as.lineTo(-0.004,-0.017);as.lineTo(0.008,-0.009);fish.add(new THREE.Mesh(new THREE.ShapeGeometry(as),finM));
+  [-1,1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.0028,10,8),new THREE.MeshStandardMaterial({color:0x141014,roughness:.2}));e.position.set(0.012,0.002,s*0.0045);fish.add(e);});
+  fish.traverse(m=>{if(m.isMesh)m.castShadow=false;});
+  A.bounds={x0:X0+0.025,x1:X1-0.022,y0:Y0+0.045,y1:WY-0.018,z0:Z0+0.05,z1:Z1-0.07};      // keeps clear of glass, gravel, filter and tube
+  fish.position.set(XC,(A.bounds.y0+A.bounds.y1)/2,ZC);A.vel=new THREE.Vector3(0,0,-0.02);A.target=null;A.wait=0;A.visitPot=false;A.potT=0;A.pot=POT;
+  /* food bowl beside the tank: cream bowl with embossed flowers, brown pellets */
+  const bowlTex=tex(256,64,(c,w,h)=>{c.fillStyle='#efe6d2';c.fillRect(0,0,w,h);c.strokeStyle='rgba(190,170,140,.8)';c.lineWidth=3;for(let i=0;i<8;i++){const x=16+i*32;c.beginPath();c.arc(x,34,9,0,7);c.stroke();c.beginPath();c.arc(x,34,3,0,7);c.stroke();}});
+  const bp=[[0.012,0],[0.03,0.002],[0.042,0.012],[0.046,0.03],[0.045,0.04],[0.041,0.04],[0.039,0.032],[0.034,0.016],[0.012,0.008]].map(([r,y])=>new THREE.Vector2(r,y));
+  const bowl=new THREE.Mesh(new THREE.LatheGeometry(bp,28),mat(0xffffff,{map:bowlTex,roughness:.85,side:THREE.DoubleSide}));bowl.position.set(0.43,Y0,3.76);bowl.castShadow=true;g.add(pick(bowl,'food'));A.bowl=bowl;
+  const pelM=M(0x9a6a3d,{roughness:.9});const pellets=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.0034,0),pelM,60);
+  for(let i=0;i<60;i++){const a=Math.random()*7,r=Math.sqrt(Math.random())*0.034;o.position.set(Math.cos(a)*r,0.03+Math.random()*0.006,Math.sin(a)*r);o.scale.setScalar(0.8+Math.random()*0.5);o.rotation.set(Math.random()*3,Math.random()*3,0);o.updateMatrix();pellets.setMatrixAt(i,o.matrix);}
+  pellets.position.copy(bowl.position);g.add(pellets);A.bowlPellets=pellets;
+  const pickBox=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.07,12),new THREE.MeshBasicMaterial({colorWrite:false,depthWrite:false,transparent:true,opacity:0}));pickBox.position.set(0.43,Y0+0.035,3.76);g.add(pick(pickBox,'food'));
+  /* sinking food + bubbles: small pools, no accumulation */
+  A.pelGeo=new THREE.IcosahedronGeometry(0.0032,0);A.pelM=new THREE.MeshStandardMaterial({color:0x9a6a3d,roughness:.9,transparent:true,opacity:1});
+  const bubM=new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.55,roughness:.05,depthWrite:false});A.bubM=bubM;A.bubGeo=new THREE.SphereGeometry(1,8,6);
+  for(let i=0;i<14;i++){const b=new THREE.Mesh(A.bubGeo,bubM);b.scale.setScalar(0.0015+Math.random()*0.0015);b.position.set(X0+0.07,Y0+0.03+Math.random()*(WY-Y0-0.04),Z1-0.035);b.userData.v=0.03+Math.random()*0.03;b.userData.ambient=true;g.add(b);A.bubbles.push(b);}
+  /* soft LED spill on the wall and mat around the tank (the room's own lights stay untouched) */
+  const spill=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xf2f6ff,transparent:true,opacity:.35,depthWrite:false,blending:THREE.AdditiveBlending}));spill.scale.set(0.45,0.36,1);spill.position.set(0.04,LY-0.06,ZC);g.add(spill);A.spill=spill;
+  g.traverse(m=>{if(m.isMesh&&m.castShadow===undefined)m.castShadow=false;});
+  /* navigation: the cabinet is a fixed obstacle (it stands in a corner Rose never walks through) */
+  NAV_FIXED.push(new THREE.Box3(new THREE.Vector3(0.04,0,3.66),new THREE.Vector3(0.54,0.45,3.98)));
+  return A;})();
+/* LED colours: white, blue, pink, purple, green — smooth 0.6 s blend, only the tank light/LED/water tint change */
+const AQ_COLORS=[0xf2f6ff,0x4da3ff,0xff6fb0,0xa874ff,0x5fe08a];
+AQ.cur=new THREE.Color(AQ_COLORS[0]);AQ.from=AQ.cur.clone();AQ.to=AQ.cur.clone();AQ.blend=1;
+function aqSetColor(i){AQ.colorIdx=i%AQ_COLORS.length;AQ.from.copy(AQ.cur);AQ.to.setHex(AQ_COLORS[AQ.colorIdx]);AQ.blend=0;}
+/* the tank sits in the corner behind the wardrobe's side, so it is viewed from the room side (+x); while the aquarium is open the orbit target may reach that corner */
+const TMIN_AQ=new THREE.Vector3(0.1,0.2,0.4),TMAX_AQ=new THREE.Vector3(W-0.4,1.5,3.92);
+function aqView(){const v=framedView({tgt:new THREE.Vector3(0.18,0.6,3.82),pos:new THREE.Vector3(1.0,0.95,3.66),fov:48,halfW:0.24,halfH:0.18},2.6);v.aq=true;return v;}
+const aqPanel=document.getElementById('aqPanel');
+function aqEnter(quiet){AQ.mode=true;aqPanel.hidden=false;flyTo(aqView());lastAct=performance.now();
+  walkTo(AQ.stand,AQ.look,'reach');if(!AQ.said.hello){AQ.said.hello=true;if(!quiet)say(AQ_SAY.hello);}}
+function aqLeave(){if(!AQ.mode)return;AQ.mode=false;AQ.said.light=false;aqPanel.hidden=true;flyTo(state==='done'||state==='reveal'?chestPose():startPose());}
+function aqFeed(){lastAct=performance.now();if(!AQ.mode)aqEnter(true);
+  const now=performance.now();if(now<AQ.feedReady||AQ.pellets.length){AQ.bowl.rotation.z=0.12;AQ.shake=0.5;return false;}   // gentle wiggle while waiting, no message
+  AQ.feedReady=now+8000;say(AQ_SAY.feed);roseDo('reach',{look:AQ.look});SFX.tap();
+  for(let i=0;i<6;i++){const p=new THREE.Mesh(AQ.pelGeo,AQ.pelM.clone());const b=AQ.box;
+    for(let k=0;k<30;k++){p.position.set(b.X0+0.04+Math.random()*0.1,AQ.waterY+0.002,b.Z0+0.06+Math.random()*0.14);_aq3.set(p.position.x,AQ.pot.c.y,p.position.z);if(!aqInPot(_aq3,0.07,0.025))break;}   // never above or beside the pot (food must stay reachable)
+    p.position.y=AQ.waterY+0.002;
+    p.userData={vy:-(0.012+Math.random()*0.006),delay:0.05+i*0.22,drift:(Math.random()-.5)*0.002,bottom:0};p.visible=false;AQ.g.add(p);AQ.pellets.push(p);}
+  AQ.eaten=0;AQ.feeding=true;return true;}
+function aqLight(){lastAct=performance.now();if(!AQ.mode)aqEnter(true);aqSetColor(AQ.colorIdx+1);if(!AQ.said.light){AQ.said.light=true;say(AQ_SAY.light);}tones([[660,0,.12],[990,.08,.16]],'sine',0.07);
+  const btn=document.getElementById('btnLight');btn.style.setProperty('--led','#'+AQ_COLORS[AQ.colorIdx].toString(16).padStart(6,'0'));}
+function aqBubble(p,n){for(let i=0;i<n;i++){const b=new THREE.Mesh(AQ.bubGeo,AQ.bubM);b.scale.setScalar(0.0012+Math.random()*0.0014);b.position.copy(p);b.position.x+=(Math.random()-.5)*0.006;b.userData.v=0.04+Math.random()*0.03;b.userData.life=1.2;AQ.g.add(b);AQ.bubbles.push(b);}}
+function aqReset(){AQ.pellets.forEach(p=>{AQ.g.remove(p);p.material.dispose();});AQ.pellets.length=0;AQ.feeding=false;AQ.feedReady=0;aqLeave();}
+const _aq=new THREE.Vector3(),_aq2=new THREE.Vector3(),_aq3=new THREE.Vector3(),_aq4=new THREE.Vector3();
+/* is p inside the clay pot's volume (cylinder along its axis)? r = radius, m = extra margin along the axis */
+function aqInPot(p,r,m){_aq4.subVectors(p,AQ.potBase);const al=_aq4.dot(AQ.potAxis);if(al<-m||al>0.082+m)return false;_aq4.addScaledVector(AQ.potAxis,-al);return _aq4.length()<r;}
+/* push the fish out through the pot wall when it is not on a pot visit */
+function aqPotPush(F){if(!aqInPot(F.position,0.038,0.005))return;_aq4.subVectors(F.position,AQ.potBase);const al=_aq4.dot(AQ.potAxis);_aq4.addScaledVector(AQ.potAxis,-al);
+  if(_aq4.lengthSq()<1e-10||_aq4.y<-0.3*_aq4.length())_aq4.set(0,1,0).addScaledVector(AQ.potAxis,-AQ.potAxis.y);/* never push down into the gravel */F.position.copy(AQ.potBase).addScaledVector(AQ.potAxis,al).addScaledVector(_aq4.normalize(),0.038);}
+function updateAquarium(dt,t){const A=AQ,F=A.fish,B=A.bounds;
+  /* LED colour blend */
+  if(A.blend<1){A.blend=Math.min(1,A.blend+dt/0.6);A.cur.copy(A.from).lerp(A.to,ease(A.blend));A.lamp.color.copy(A.cur);A.led.color.copy(A.cur);A.spill.material.color.copy(A.cur);
+    A.waterM.emissive.copy(A.cur).multiplyScalar(0.18);}
+  if(A.shake>0){A.shake=Math.max(0,A.shake-dt);A.bowl.rotation.z=Math.sin(A.shake*40)*0.08*A.shake;}
+  /* water surface ripple */
+  const pa=A.surf.geometry.attributes.position.array,p0=A.surf0;for(let i=0;i<pa.length;i+=3)pa[i+2]=p0[i+2]+Math.sin(t*2.2+p0[i]*90+p0[i+1]*70)*0.0012;A.surf.geometry.attributes.position.needsUpdate=true;
+  /* food: sinks, fish eats it; a pellet that reaches the gravel fades out in 3 s */
+  let food=null,fd=9;
+  for(let i=A.pellets.length-1;i>=0;i--){const p=A.pellets[i],u=p.userData;if(u.delay>0){u.delay-=dt;if(u.delay<=0){p.visible=true;tones([[300,0,.08]],'sine',0.05);}continue;}
+    const floor=A.gravelTop(p.position.x,p.position.z)+0.004;
+    if(p.position.y>floor){p.position.y=Math.max(floor,p.position.y+u.vy*dt);p.position.z+=u.drift*dt;p.rotation.x+=dt*2;}else{u.bottom+=dt;p.material.opacity=Math.max(0,1-u.bottom/3);
+      if(u.bottom>=3){A.g.remove(p);p.material.dispose();A.pellets.splice(i,1);continue;}}
+    const d=p.position.distanceTo(F.position);if(d<fd){fd=d;food=p;}}
+  if(A.feeding&&!A.pellets.length){A.feeding=false;if(A.eaten>=6){say(AQ_SAY.yum);roseDo('wave');lastAct=performance.now();}}
+  /* fish steering: chase food > visit the pot now and then > wander */
+  let tgt;
+  const inside=A.potT===1||A.potT===2||A.potT===4;
+  if(food&&food.visible&&inside){   // food arrived while in the pot: swim out through the mouth first, then eat
+    if(A.potT!==4){A.potT=4;A.target=A.potOut.clone();}tgt=A.target;if(F.position.distanceTo(A.potOut)<0.012){A.potT=0;A.target=null;}}
+  else if(food&&food.visible){if(A.potT){A.potT=0;A.target=null;}tgt=food.position;if(fd<0.012){aqBubble(food.position,3);tones([[880,0,.06],[1180,.05,.07]],'sine',0.05);A.g.remove(food);food.material.dispose();A.pellets.splice(A.pellets.indexOf(food),1);A.eaten=(A.eaten||0)+1;if(A.feeding&&!A.pellets.length){A.feeding=false;if(A.eaten>=6){say(AQ_SAY.yum);roseDo('wave');lastAct=performance.now();}}}}
+  else{if(!A.target||F.position.distanceTo(A.target)<0.01){A.wait-=dt;if(A.wait<=0){
+      if(A.potT===3){A.target=A.potMouth.clone();A.potT=2;A.wait=0.1;}
+      else if(A.potT===2){A.target=A.potIn.clone();A.potT=1;A.wait=1.4;}
+      else if(A.potT===1){A.target=A.potOut.clone();A.potT=4;A.wait=0.2;}
+      else if(A.potT===4){A.potT=0;A.target=null;A.wait=0;}
+      else if(Math.random()<0.25){A.target=A.potOut.clone();A.potT=3;A.wait=0.1;}
+      else{A.target=new THREE.Vector3();for(let k=0;k<20;k++){A.target.set(B.x0+Math.random()*(B.x1-B.x0),B.y0+Math.random()*(B.y1-B.y0),B.z0+Math.random()*(B.z1-B.z0));if(!aqInPot(A.target,0.055,0.02))break;}A.wait=0.4+Math.random()*1.2;}}}
+    tgt=A.target||F.position;}
+  // a pot visit can never last forever (safety): after 10 s the fish swims out and carries on
+  if(A.potT){A.potTime=(A.potTime||0)+dt;if(A.potT!==4&&A.potTime>12){A.potT=4;A.target=A.potOut.clone();A.wait=0;A.potTime=6;}else if(A.potTime>18){A.potT=0;A.target=null;A.wait=0;}}else A.potTime=0;
+  // going around the pot: if the straight line to the target passes through it, go over the top first
+  if(!(A.potT===1||A.potT===2||A.potT===4)&&tgt!==F.position){const top=A.pot.c.y+0.065;let hit=false;
+    for(let k=1;k<=5&&!hit;k++){_aq3.lerpVectors(F.position,tgt,k/6);hit=aqInPot(_aq3,0.05,0.005);}
+    if(hit&&F.position.y<top-0.015){_aq3.set(F.position.x,top,F.position.z);tgt=_aq3;}else if(hit){_aq3.set(tgt.x,top,tgt.z);tgt=_aq3;}}
+  const speed=food?0.07:(A.potT?0.03:0.04);_aq.subVectors(tgt,F.position);const L=_aq.length();if(L>1e-4)_aq.multiplyScalar(Math.min(1,L/0.03)*speed/L);
+  // keep clear of the pot walls unless going in through the mouth
+  if((!A.potT||A.potT===3)&&!food){_aq2.subVectors(F.position,A.pot.c);const pd=_aq2.length();if(pd<0.06)_aq.addScaledVector(_aq2.normalize(),(0.06-pd)*1.2);}
+  A.vel.lerp(_aq,Math.min(1,dt*2.2));F.position.addScaledVector(A.vel,dt);
+  if(!inside)aqPotPush(F);
+  const inPot=A.potT===1||A.potT===2;F.position.x=Math.min(B.x1,Math.max(inPot?A.potIn.x-0.01:B.x0,F.position.x));F.position.y=Math.min(B.y1,Math.max(inPot?A.potIn.y-0.01:(food?B.y0-0.02:B.y0),F.position.y));F.position.z=Math.min(B.z1,Math.max(B.z0-(inPot?0.03:0),F.position.z));
+  const hv=Math.hypot(A.vel.x,A.vel.z);if(hv>0.002)F.rotation.y=Math.atan2(-A.vel.z,A.vel.x);F.rotation.z=THREE.MathUtils.clamp(A.vel.y*6,-0.4,0.4);
+  F.children[1].rotation.y=Math.sin(t*(food?22:12))*0.45;F.position.y+=Math.sin(t*1.7)*0.00005;
+  /* bubbles rise and recycle (ambient) or pop (feeding) */
+  for(let i=A.bubbles.length-1;i>=0;i--){const b=A.bubbles[i];b.position.y+=b.userData.v*dt;b.position.x+=Math.sin(t*3+i)*0.0004;
+    if(b.position.y>A.waterY-0.002){if(b.userData.ambient){b.position.y=A.box.Y0+0.03;}else{A.g.remove(b);A.bubbles.splice(i,1);}}}}
+
+NAV_EXTRA.push(...NAV_FIXED);NAV.rebuild();
 /* ---------- 10. input: tap vs drag ---------- */
 const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();let down=null;
 function pick(ev){const r=canvas.getBoundingClientRect();ndc.set(((ev.clientX-r.left)/r.width)*2-1,-((ev.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,camera);
@@ -1056,6 +1324,7 @@ function inGroupVisible(o){while(o){if(!o.visible)return false;o=o.parent;}retur
 canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:performance.now()};});
 canvas.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y),dt=performance.now()-down.t;down=null;
   if(moved>10||dt>650||state==='intro'||state==='reveal')return;const h=pick(e);if(!h)return;
+  if(h.object.userData.aqua){const k=h.object.userData.aqua;if(k==='food')aqFeed();else if(k==='light')aqLight();else aqEnter();return;}aqLeave();
   if(h.object===floor){lastAct=performance.now();walkTo(h.point,null);return;}if(h.object.userData.spot){if(state==='play'||state==='done')spotTap(h.object.userData.spot);return;}tapItem(h.object.userData.item,h.point,h.object);});
 let hoverT=0;canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||e.buttons)return;const n=performance.now();if(n-hoverT<80)return;hoverT=n;const h=pick(e);canvas.style.cursor=h&&h.object!==floor&&state!=='intro'?'pointer':'grab';});
 
@@ -1064,7 +1333,9 @@ document.getElementById('btnStart').onclick=()=>{loadVoices();document.getElemen
   say('مرحباً روز! هيا نبحث عن ثلاث نجوم مخبأة في غرفتك. اضغطي على الأغراض!');roseDo('wave');lastAct=performance.now();renderTray();};
 document.getElementById('btnAgain').onclick=()=>{document.getElementById('outro').hidden=true;newGame();flyTo(startPose());state='play';say('لعبة جديدة! النجوم تخبّأت في أماكن جديدة');lastAct=performance.now();};
 document.getElementById('btnHint').onclick=()=>{if(state==='play')giveHint();else if(state==='intro')say('اضغطي على زر ابدئي المغامرة');};
-document.getElementById('btnCam').onclick=()=>flyTo(state==='done'||state==='reveal'?chestPose():startPose());
+document.getElementById('btnFish').onclick=()=>{if(state==='intro')return;SFX.tap();aqEnter();};
+document.getElementById('btnCam').onclick=()=>{aqLeave();flyTo(state==='done'||state==='reveal'?chestPose():startPose());};
+document.getElementById('btnFood').onclick=()=>aqFeed();document.getElementById('btnLight').onclick=()=>aqLight();
 const bs=document.getElementById('btnSound');bs.onclick=()=>{soundOn=!soundOn;bs.setAttribute('aria-pressed',soundOn);bs.setAttribute('aria-label',soundOn?'الصوت يعمل':'الصوت مكتوم');
   document.getElementById('waves').toggleAttribute('hidden',!soundOn);document.getElementById('mute').toggleAttribute('hidden',soundOn);if(!soundOn)stopVoice();};
 
@@ -1078,8 +1349,9 @@ function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;const t=now
   if(camTween){const k=Math.min(1,(now-camTween.t0)/1200),e=ease(k);controls.enabled=false;
     camera.position.lerpVectors(camTween.from.pos,camTween.to.pos,e);controls.target.lerpVectors(camTween.from.tgt,camTween.to.tgt,e);
     camera.fov=camTween.from.fov+(camTween.to.fov-camTween.from.fov)*e;camera.updateProjectionMatrix();if(k>=1){camTween=null;controls.enabled=true;}}
-  controls.update();controls.target.clamp(TMIN,TMAX);
-  updateCuts();updateWardrobes(dt);updateSpotRing(dt);updateRose(dt,t);updateFx(dt,now);updateStars(dt);updateChest(dt);updateConfetti(dt);
+  controls.minDistance=(AQ.mode||camTween)?0.6:2.2; // the close-up aquarium view sits nearer than the normal orbit limit
+  controls.update();controls.target.clamp(AQ.mode?TMIN_AQ:TMIN,AQ.mode?TMAX_AQ:TMAX);
+  updateCuts();updateWardrobes(dt);updateSpotRing(dt);updateAquarium(dt,t);updateRose(dt,t);updateFx(dt,now);updateStars(dt);updateChest(dt);updateConfetti(dt);
   if(state==='play'&&now-lastAct>16000)giveHint();
   const pa=pg.attributes.position.array,ts=now*0.0004;for(let i=0;i<pa.length;i+=3){pa[i+1]=base0[i+1]+Math.sin(ts+i)*0.08;pa[i]=base0[i]+Math.cos(ts*0.7+i)*0.05;}pg.attributes.position.needsUpdate=true;
   renderer.render(scene,camera);requestAnimationFrame(frame);}
