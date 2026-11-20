@@ -123,6 +123,7 @@ body{height:100%;margin:0;background:radial-gradient(120% 90% at 50% 0%,var(--sk
 
 <script src="vendor/three.min.js"></script>
 <script src="vendor/OrbitControls.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
 
 <script>
 (function(){
@@ -572,117 +573,89 @@ function setCut(group,on){group.traverse(o=>{if(!o.isMesh)return;o.userData.cut=
 let cutKey='';
 function updateCuts(){const p=camera.position,s=[p.x<0.2,p.z<0.2,p.x>W-0.2,p.z>D-0.2],k=s.join();if(k===cutKey)return;cutKey=k;[1,2,3,4].forEach((g,i)=>setCut(G[g],s[i]));if(typeof syncWardCuts==='function')syncWardCuts();}
 
-/* ---------- 3. Rose — official character v3 (articulated 3D rig, ~1.05 m like a 4-year-old) ----------
-   Rig: rose(root on floor) > body(air offset) > hips > [legL,legR > knee > ankle > shoe] , spine > chest > [shoulderL/R > elbow > wrist > hand], neck > head
-   Head: face, eyes (blink/expressions), brows, mouths, center-parted hair, two braids (spring-driven secondary motion) with pink bows. */
+/* ---------- 3. Rose — character v4: the Meshy model (assets/models/rose.glb, 23-bone skeleton, ~1.05 m) ----------
+   The skinned model is driven by the same procedural pose values (P/Pc) the game already computes for every action
+   (walk, run, wave, search, reach, discover, jump, celebrate, think, kneel, open, proud). Each old joint rotation is
+   applied to the matching bone in Rose's own frame; a ground pass keeps the soles (or knees, when kneeling) on the floor.
+   The model's face is painted in its texture, so it has no separate eyes/mouth to animate. */
 const rose=new THREE.Group();scene.add(rose);
-const RIG={};
+const RIG={ready:false};
 (function buildRose(){
-  const SM=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.6},o));
-  const cvs=(w,h,f)=>{const c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;};
-  // yellow joggers with little fox & bear faces (no text, no logos)
-  const animals=cvs(256,256,(c,w,h)=>{c.fillStyle='#f3b32f';c.fillRect(0,0,w,h);
-    const bear=(x,y,s)=>{c.fillStyle='#a8673a';[[-.62,-.6],[.62,-.6]].forEach(([a,b])=>{c.beginPath();c.arc(x+a*s,y+b*s,s*.34,0,7);c.fill();});c.beginPath();c.arc(x,y,s*.78,0,7);c.fill();
-      c.fillStyle='#f3d6b0';c.beginPath();c.ellipse(x,y+s*.25,s*.36,s*.27,0,0,7);c.fill();c.fillStyle='#2a1a12';[-.3,.3].forEach(a=>{c.beginPath();c.arc(x+a*s,y-s*.12,s*.08,0,7);c.fill();});c.beginPath();c.ellipse(x,y+s*.15,s*.1,s*.07,0,0,7);c.fill();};
-    const fox=(x,y,s)=>{c.fillStyle='#e0702a';c.beginPath();c.moveTo(x-s*.85,y-s*.75);c.lineTo(x-s*.35,y-s*.35);c.lineTo(x+s*.35,y-s*.35);c.lineTo(x+s*.85,y-s*.75);c.lineTo(x+s*.75,y+s*.05);c.lineTo(x,y+s*.75);c.lineTo(x-s*.75,y+s*.05);c.closePath();c.fill();
-      c.fillStyle='#fff7ee';c.beginPath();c.moveTo(x-s*.7,y+s*.05);c.lineTo(x,y+s*.75);c.lineTo(x-s*.12,y+s*.15);c.closePath();c.fill();c.beginPath();c.moveTo(x+s*.7,y+s*.05);c.lineTo(x,y+s*.75);c.lineTo(x+s*.12,y+s*.15);c.closePath();c.fill();
-      c.fillStyle='#2a1a12';[-.28,.28].forEach(a=>{c.beginPath();c.arc(x+a*s,y-s*.05,s*.07,0,7);c.fill();});c.beginPath();c.arc(x,y+s*.62,s*.09,0,7);c.fill();};
-    const S=22;for(let r=0;r<4;r++)for(let k=0;k<4;k++){const x=32+k*64+(r%2)*32,y=32+r*64;((r+k)%2?bear:fox)(x%w,y,S);}});
-  animals.wrapS=animals.wrapT=THREE.RepeatWrapping;animals.repeat.set(0.6,3.2);
-  const knit=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');const id=x.createImageData(128,128);for(let i=0;i<128*128;i++){const v=118+((i%128)%3===0?18:0)+Math.random()*20;id.data[i*4]=id.data[i*4+1]=id.data[i*4+2]=v;id.data[i*4+3]=255;}x.putImageData(id,0,0);
-    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(5,5);return t;})();
-  const skin=SM(0xf7cdb3,{roughness:.5}),skinD=SM(0xf0b9a0,{roughness:.55}),
-    hair=SM(0x3a2318,{roughness:.38,metalness:.05}),hairL=SM(0x55351f,{roughness:.4}),hairD=SM(0x2a170f,{roughness:.45}),
-    hood=SM(0x5d5d63,{roughness:.92,bumpMap:knit,bumpScale:.0015}),hoodD=SM(0x4d4d53,{roughness:.95,bumpMap:knit,bumpScale:.0015}),
-    pants=SM(0xffffff,{map:animals,roughness:.88}),cuffY=SM(0xe9a92a,{roughness:.9}),sock=SM(0xf7f6f3,{roughness:.9}),
-    shoe=SM(0x1e1e22,{roughness:.45}),sole=SM(0xf3f2ef,{roughness:.6}),bow=SM(0xf38bb2,{roughness:.4}),bowD=SM(0xe0709a,{roughness:.45}),
-    gold=SM(0xe9b84a,{metalness:.85,roughness:.25}),watch=SM(0xf27aa9,{roughness:.35}),watchF=SM(0xfff5f8,{roughness:.2}),
-    eyeW=SM(0xffffff,{roughness:.12}),iris=SM(0x6e3e1b,{roughness:.12}),irisL=SM(0xa8682f,{roughness:.15}),pupil=SM(0x160c07,{roughness:.08}),shine=new THREE.MeshBasicMaterial({color:0xffffff}),
-    brow=SM(0x3a2318,{roughness:.6}),lash=SM(0x1a0f0a,{roughness:.5}),lip=SM(0xc9606f,{roughness:.45}),mouthIn=SM(0x6b1f2c,{roughness:.6}),teeth=SM(0xffffff,{roughness:.3}),tongue=SM(0xec8a95,{roughness:.5}),
-    cheek=SM(0xf3a0ad,{roughness:1,transparent:true,opacity:.42,depthWrite:false}),glassRim=SM(0x222222,{metalness:.6,roughness:.3}),glassH=SM(0x7a4a26,{roughness:.5}),lens=SM(0xd8ecf7,{roughness:.05,transparent:true,opacity:.35});
-  const gc={};const G=(k,f)=>gc[k]||(gc[k]=f());
-  const add=(p,geo,m,x=0,y=0,z=0)=>{const me=new THREE.Mesh(geo,m);me.position.set(x,y,z);me.castShadow=true;p.add(me);return me;};
-  const grp=(p,x=0,y=0,z=0)=>{const g=new THREE.Group();g.position.set(x,y,z);p.add(g);return g;};
-  const sph=(r,w=20,h=14)=>G('s'+r+w,()=>new THREE.SphereGeometry(r,w,h));
-  const cap=(r,l)=>G('c'+r+l,()=>new THREE.CapsuleGeometry(r,l,6,14));
-  const cyl=(rt,rb,h,s=16)=>G('y'+rt+rb+h+s,()=>new THREE.CylinderGeometry(rt,rb,h,s));
-  const arc=(R,t,a)=>G('t'+R+t+a,()=>new THREE.TorusGeometry(R,t,6,18,a));
-
-  const body=grp(rose);RIG.body=body;
-  const hips=grp(body,0,0.486,0);RIG.hips=hips;
-  const hipTex=animals.clone();hipTex.needsUpdate=true;hipTex.repeat.set(2.2,1.3);add(hips,sph(0.1,24,16),SM(0xffffff,{map:hipTex,roughness:.88}),0,0.005,0).scale.set(1.18,0.95,0.98);
-  // legs
-  ['L','R'].forEach((n,i)=>{const s=i?-1:1;const leg=grp(hips,s*0.058,-0.02,0);RIG['leg'+n]=leg;
-    add(leg,cap(0.05,0.13),pants,0,-0.1,0);
-    const knee=grp(leg,0,-0.2,0);RIG['knee'+n]=knee;add(knee,cap(0.044,0.12),pants,0,-0.085,0);
-    add(knee,cyl(0.046,0.046,0.035),cuffY,0,-0.165,0);
-    const ank=grp(knee,0,-0.19,0);RIG['ankle'+n]=ank;add(ank,cyl(0.036,0.036,0.05),sock,0,0.01,0);
-    add(ank,rgeo(0.078,0.058,0.15,0.028),shoe,0,-0.032,0.028);add(ank,rgeo(0.084,0.022,0.16,0.01),sole,0,-0.065,0.03);
-    for(let k=0;k<3;k++)add(ank,G('lace',()=>new THREE.BoxGeometry(0.04,0.006,0.008)),sole,0,-0.002-k*0.004,0.05+k*0.022).rotation.x=0.35;});
-  // torso (plain gray hoodie: hem, kangaroo pocket, hood, drawstrings — no logos)
-  const spine=grp(hips,0,0.04,0);RIG.spine=spine;
-  const prof=[[0.0,0.0],[0.118,0.0],[0.124,0.05],[0.121,0.12],[0.113,0.19],[0.098,0.235],[0.055,0.258],[0.0,0.262]].map(([r,y])=>new THREE.Vector2(r,y));
-  const torso=add(spine,new THREE.LatheGeometry(prof,28),hood,0,0,0);torso.scale.z=0.84;RIG.torso=torso;
-  add(spine,cyl(0.121,0.121,0.04,28),hoodD,0,0.005,0).scale.z=0.86;
-  const pocket=add(spine,rgeo(0.16,0.08,0.024,0.011),hoodD,0,0.068,0.096);pocket.rotation.x=-0.06;
-  add(spine,G('pk',()=>new THREE.BoxGeometry(0.14,0.004,0.004)),SM(0x3f3f45),0,0.108,0.108);
-  const chest=grp(spine,0,0.13,0);RIG.chest=chest;
-  const hoodRing=add(chest,G('hr',()=>new THREE.TorusGeometry(0.068,0.03,10,22,Math.PI*1.35)),hood,0,0.122,-0.008);hoodRing.rotation.set(Math.PI/2,0,Math.PI*0.325+Math.PI);
-  add(chest,sph(0.09,20,14),hood,0,0.095,-0.075).scale.set(1.05,0.72,0.55);
-  [-1,1].forEach(s=>{const d=add(chest,cyl(0.0045,0.0045,0.085,6),SM(0xe8e8ea),s*0.026,0.07,0.096);d.rotation.x=-0.08;add(chest,cyl(0.006,0.006,0.016,8),SM(0x9a9aa0),s*0.026,0.022,0.1);});
-  add(chest,cyl(0.037,0.04,0.07,16),skin,0,0.145,0);
-  // arms (sleeves, cuffs, small hands, pink watch on her left wrist)
-  ['L','R'].forEach((n,i)=>{const s=i?-1:1;const sh=grp(chest,s*0.113,0.088,0);RIG['sh'+n]=sh;
-    add(sh,sph(0.048),hood,0,-0.005,0);add(sh,cap(0.043,0.08),hood,0,-0.07,0);
-    const el=grp(sh,0,-0.145,0);RIG['el'+n]=el;add(el,cap(0.039,0.075),hood,0,-0.055,0);add(el,cyl(0.037,0.034,0.03),hoodD,0,-0.112,0);
-    const wr=grp(el,0,-0.128,0);RIG['wr'+n]=wr;
-    const hand=add(wr,sph(0.034,16,12),skin,0,-0.034,0.004);hand.scale.set(0.82,1.15,0.62);
-    const th=add(wr,cap(0.011,0.02),skin,s*-0.024,-0.025,0.016);th.rotation.set(0.4,0,s*0.6);
-    if(s>0){const w=add(wr,G('wt',()=>new THREE.TorusGeometry(0.03,0.008,8,18)),watch,0,0.004,0);w.rotation.x=Math.PI/2;const f=add(wr,cyl(0.013,0.013,0.008,14),watchF,0.03,0.004,0);f.rotation.z=Math.PI/2;
-      add(wr,cyl(0.016,0.016,0.006,14),watch,0.028,0.004,0).rotation.z=Math.PI/2;}
-    else{const mg=grp(wr,0,-0.035,0.012);mg.visible=false;RIG.magnifier=mg;mg.rotation.x=1.9;add(mg,cyl(0.009,0.011,0.09,10),glassH,0,-0.02,0);
-      const rim=add(mg,G('rim',()=>new THREE.TorusGeometry(0.042,0.007,8,24)),glassRim,0,-0.11,0);rim.rotation.x=Math.PI/2;const ln=add(mg,G('lens',()=>new THREE.CircleGeometry(0.04,24)),lens,0,-0.11,0);ln.rotation.x=Math.PI/2;ln.material.side=THREE.DoubleSide;ln.castShadow=false;}});
-  // neck + head
-  const neck=grp(chest,0,0.15,0);RIG.neck=neck;const head=grp(neck,0,0.12,0.004);RIG.head=head;
-  add(head,sph(0.12,40,30),skin).scale.set(1,1.03,0.96);
-  [-1,1].forEach(s=>{add(head,sph(0.027,14,10),skinD,s*0.118,-0.012,-0.008).scale.set(0.45,1,0.8);
-    const fl=grp(head,s*0.124,-0.038,0.002);for(let k=0;k<5;k++){const a=k*Math.PI*2/5;add(fl,sph(0.0045,8,6),gold,0,Math.cos(a)*0.006,Math.sin(a)*0.006);}add(fl,sph(0.004,8,6),gold);});
-  // eyes
-  RIG.eyes=[];RIG.closed=[];RIG.irises=[];
-  [-1,1].forEach(s=>{const eg=grp(head,s*0.043,-0.004,0.098);eg.rotation.y=s*0.2;RIG.eyes.push(eg);
-    add(eg,sph(0.03,24,18),eyeW).scale.set(0.95,1.1,0.42);
-    const ir=grp(eg,0,-0.001,0.006);RIG.irises.push(ir);add(ir,sph(0.022,22,16),iris).scale.set(1,1.06,0.4);add(ir,sph(0.016,18,12),irisL,0,-0.006,0.003).scale.set(1,0.6,0.35);
-    add(ir,sph(0.011,16,10),pupil,0,0,0.006).scale.set(1,1.08,0.4);add(ir,sph(0.0058,10,8),shine,-s*0.007,0.009,0.011);add(ir,sph(0.003,8,6),shine,s*0.006,-0.008,0.011);
-    const l=add(eg,arc(0.03,0.0035,Math.PI),lash,0,0.001,0.003);l.scale.set(0.97,1.12,1);const fk=add(eg,G('fk',()=>new THREE.ConeGeometry(0.004,0.014,6)),lash,s*0.03,0.012,0.002);fk.rotation.z=-s*1.0;
-    const ce=add(head,arc(0.02,0.004,Math.PI),lash,s*0.043,-0.008,0.112);ce.visible=false;RIG.closed.push(ce);});
-  // brows
-  RIG.brows=[-1,1].map(s=>{const b=grp(head,s*0.046,0.05,0.098);const m=add(b,arc(0.026,0.0045,Math.PI*0.75),brow);m.rotation.z=Math.PI*0.125;m.scale.y=0.38;m.position.y=-0.012;b.rotation.y=s*0.2;return b;});
-  add(head,sph(0.011,12,10),skinD,0,-0.03,0.119).scale.set(1.25,0.85,0.8); // nose
-  [-1,1].forEach(s=>add(head,sph(0.026,14,10),cheek,s*0.068,-0.042,0.093).scale.set(1,0.62,0.3));
-  // mouths (expressions swap shapes; face proportions never change)
-  const mo=grp(head,0,-0.064,0.1015);mo.rotation.x=-0.18;RIG.mouth={};
-  const smile=grp(mo);add(smile,arc(0.021,0.0042,Math.PI),lip).rotation.z=Math.PI;RIG.mouth.smile=smile;
-  const open=grp(mo);add(open,G('ohd',()=>new THREE.CircleGeometry(0.023,20,Math.PI,Math.PI)),mouthIn);add(open,G('teeth',()=>new THREE.BoxGeometry(0.03,0.006,0.002)),teeth,0,-0.003,0.001);
-    add(open,G('tg',()=>new THREE.CircleGeometry(0.012,14,Math.PI,Math.PI)),tongue,0,-0.012,0.001);add(open,arc(0.023,0.003,Math.PI),lip).rotation.z=Math.PI;RIG.mouth.open=open;
-  const oo=grp(mo,0,-0.004,0);add(oo,G('od',()=>new THREE.CircleGeometry(0.009,16)),mouthIn).scale.set(1,1.25,1);add(oo,G('or',()=>new THREE.TorusGeometry(0.01,0.0035,8,18)),lip).scale.set(1,1.25,1);RIG.mouth.o=oo;
-  const flat=grp(mo,0,0.002,0);const fm=add(flat,cap(0.0032,0.022),lip);fm.rotation.z=Math.PI/2+0.12;RIG.mouth.flat=flat;
-  Object.values(RIG.mouth).forEach(m=>m.visible=false);
-  // hair: center part, swept back over the ears, full back, strands
-  const capG=G('hcap',()=>new THREE.SphereGeometry(0.127,32,20,Math.PI/2,Math.PI,0,Math.PI*0.52));
-  [1,-1].forEach(s=>{const hc=grp(head);hc.rotation.set(-0.55,0,-s*0.022);const m=add(hc,capG,hair);m.rotation.y=s>0?0:Math.PI;m.material.side=THREE.DoubleSide;
-    add(head,sph(0.055,16,12),hair,s*0.085,-0.055,-0.045).scale.set(0.8,1,1.1);});
-  add(head,sph(0.118,28,20),hair,0,-0.03,-0.035).scale.set(1.02,1,0.95);
-  // two braids — permanent identity feature — each a jointed chain with a pink bow near the end
-  RIG.braids=[-1,1].map(s=>{const root=grp(head,s*0.098,-0.085,-0.03);const segs=[];let p=root;const N=9;
-    for(let i=0;i<N;i++){const seg=grp(p,0,i?-0.037:0,0);segs.push(seg);const r=0.029-i*0.0012;
-      [-1,1].forEach((k,j)=>{const lobe=add(seg,sph(r,14,10),j?hair:hairD,k*0.009,-0.018,0);lobe.scale.set(0.82,1.05,0.78);lobe.rotation.z=k*0.55;});p=seg;}
-    const tie=grp(segs[N-1],0,-0.03,0);const bw=grp(tie,0,0,0.01);
-    [-1,1].forEach(k=>{const lb=add(bw,sph(0.024,14,10),bow,k*0.027,0,0);lb.scale.set(1.25,0.8,0.5);lb.rotation.z=k*0.35;});add(bw,sph(0.011,10,8),bowD);
-    [-1,1].forEach(k=>{const tl=add(bw,G('tail',()=>new THREE.ConeGeometry(0.008,0.03,8)),bowD,k*0.01,-0.02,0);tl.rotation.z=k*0.4+Math.PI;});
-    const tuft=add(tie,G('tuft',()=>new THREE.ConeGeometry(0.022,0.06,12)),hair,0,-0.04,0);tuft.rotation.x=Math.PI;
-    return {s,root,segs,ang:new THREE.Vector2(),vel:new THREE.Vector2(),p:new THREE.Vector3(),v:new THREE.Vector3(),init:false};});
+  const S=1.05/0.9507;                       // the model is 0.9507 units tall → 1.05 m, the size of the previous Rose
+  const holder=new THREE.Group();holder.scale.setScalar(S);holder.position.y=0.47534*S;rose.add(holder);
+  RIG.holder=holder;RIG.S=S;RIG.baseY=holder.position.y;
   const sh=new THREE.Mesh(new THREE.CircleGeometry(0.2,24),new THREE.MeshBasicMaterial({color:0x3a2c28,transparent:true,opacity:.16,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.position.y=0.031;rose.add(sh);RIG.shadow=sh;
+  // magnifier for 'search' (same prop as before), carried in her right hand
+  const SM=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.6},o));
+  const mg=new THREE.Group();mg.visible=false;rose.add(mg);RIG.magnifier=mg;
+  const mgIn=new THREE.Group();mgIn.rotation.x=1.9;mg.add(mgIn);
+  const h=new THREE.Mesh(new THREE.CylinderGeometry(0.009,0.011,0.09,10),SM(0x7a4a26,{roughness:.5}));h.position.y=-0.02;mgIn.add(h);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(0.042,0.007,8,24),SM(0x222222,{metalness:.6,roughness:.3}));rim.position.y=-0.11;rim.rotation.x=Math.PI/2;mgIn.add(rim);
+  const ln=new THREE.Mesh(new THREE.CircleGeometry(0.04,24),SM(0xd8ecf7,{roughness:.05,transparent:true,opacity:.35,side:THREE.DoubleSide}));ln.position.y=-0.11;ln.rotation.x=Math.PI/2;mgIn.add(ln);
+  window.__roseLoading=true;
+  new THREE.GLTFLoader().load('assets/models/rose.glb',g=>{try{
+    holder.add(g.scene);g.scene.updateMatrixWorld(true);
+    const B={};let mesh=null;
+    g.scene.traverse(o=>{if(o.isBone)B[o.name]=o;if(o.isSkinnedMesh){mesh=o;o.castShadow=true;o.receiveShadow=false;o.frustumCulled=false;
+      const m=o.material;if(m){m.envMapIntensity=0.9;}}});
+    RIG.B=B;RIG.mesh=mesh;
+    // rest orientation of every bone relative to the holder (= Rose's own frame; the holder is only scaled)
+    const hq=new THREE.Quaternion();holder.getWorldQuaternion(hq);const hqi=hq.clone().invert();
+    RIG.rest={};RIG.restLocal={};Object.keys(B).forEach(n=>{const q=new THREE.Quaternion();B[n].getWorldQuaternion(q);RIG.rest[n]=hqi.clone().multiply(q);RIG.restLocal[n]=B[n].quaternion.clone();});
+    RIG.hipsRestPos=B.Hips.position.clone();
+    // the model stands in an A-pose: straighten each arm down first, then apply the game's shoulder/elbow angles
+    const wp=n=>{const v=new THREE.Vector3();B[n].getWorldPosition(v);return holder.worldToLocal(v);};
+    RIG.armFix={};['L','R'].forEach(s=>{const a=wp('UpperArm_'+s),b=wp('LowerArm_'+s);RIG.armFix[s]=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),-Math.atan2(b.x-a.x,-(b.y-a.y)));});
+    // ground probes: sole corners, toe tips and knee fronts (indices into the skinned mesh)
+    const pos=mesh.geometry.attributes.position,sk=mesh.geometry.attributes.skinIndex,sw=mesh.geometry.attributes.skinWeight,jn=mesh.skeleton.bones.map(b=>b.name);
+    const pick=(test,score,k)=>{const c=[];for(let i=0;i<pos.count;i++){if(test(i))c.push(i);}c.sort((a,b)=>score(a)-score(b));return c.slice(0,k);};
+    const C4=(at,i,k)=>k===0?at.getX(i):k===1?at.getY(i):k===2?at.getZ(i):at.getW(i);
+    const dom=i=>{let bi=0,bw=-1;for(let k=0;k<4;k++){const w=C4(sw,i,k);if(w>bw){bw=w;bi=C4(sk,i,k);}}return jn[bi];};
+    const probes=[];
+    ['L','R'].forEach(s=>{const sg=s==='L'?1:-1;
+      const sole=i=>dom(i)==='Foot_'+s&&pos.getY(i)<-0.462;
+      probes.push(...pick(sole,i=>pos.getZ(i),2),...pick(sole,i=>-pos.getZ(i),2),...pick(sole,i=>sg*pos.getX(i),2),...pick(sole,i=>-sg*pos.getX(i),2));
+      probes.push(...pick(i=>dom(i)==='LowerLeg_'+s&&Math.abs(pos.getY(i)+0.245)<0.03,i=>-pos.getZ(i),3));});
+    RIG.probes=[...new Set(probes)];
+    // spring state for the two braids (driven from Braid1 world motion, like the previous rig)
+    RIG.braids=['L','R'].map(s=>({bone:'Braid1_'+s,p:new THREE.Vector3(),v:new THREE.Vector3(),vel:{x:0,y:0},ang:{x:0,y:0},init:false}));
+    // rotation of the armature node above Hips, in the holder frame
+    const pq=new THREE.Quaternion();B.Hips.parent.getWorldQuaternion(pq);RIG.rootParentQ=hqi.clone().multiply(pq);
+    RIG.ready=true;}catch(err){console.error('Rose model setup failed',err);}window.__roseLoading=false;
+  },undefined,e=>{console.error('Rose model failed to load',e);window.__roseLoading=false;});
 })();
+const _e=new THREE.Euler(),_pv=new THREE.Vector3();
+const _Q=(x,y,z)=>new THREE.Quaternion().setFromEuler(_e.set(x,y,z,'XYZ'));
+/* write the pose (old joint angles, in Rose's frame) onto the skeleton */
+function applyRosePose(Pc,t,braidAng){if(!RIG.ready)return;const B=RIG.B,R=RIG.rest;
+  const hips=_Q(0,Pc.hipRY,0),spine=hips.clone().multiply(_Q(Pc.spX,0,Pc.spZ)),chest=spine.clone().multiply(_Q(0,Pc.chRY,0)),
+    neck=chest.clone().multiply(_Q(Pc.nkX,0,0)),head=neck.clone().multiply(_Q(Pc.hdX,Pc.hdY,Pc.hdZ));
+  const shL=chest.clone().multiply(_Q(Pc.shLX,0,Pc.shLZ)),elL=shL.clone().multiply(_Q(Pc.elL,0,0)),
+    shR=chest.clone().multiply(_Q(Pc.shRX,0,Pc.shRZ)),elR=shR.clone().multiply(_Q(Pc.elR,0,0));
+  const lgL=hips.clone().multiply(_Q(Pc.lgLX,0,Pc.lgLZ)),knL=lgL.clone().multiply(_Q(Pc.knL,0,0)),anL=knL.clone().multiply(_Q(Pc.anL,0,0)),
+    lgR=hips.clone().multiply(_Q(Pc.lgRX,0,Pc.lgRZ)),knR=lgR.clone().multiply(_Q(Pc.knR,0,0)),anR=knR.clone().multiply(_Q(Pc.anR,0,0));
+  const lean=Pc.spX+Pc.hdX;
+  const T={Hips:hips,Spine:spine,Chest:chest,Neck:neck,Head:head,Shoulder_L:chest,Shoulder_R:chest,
+    UpperArm_L:shL.clone().multiply(RIG.armFix.L),LowerArm_L:elL.clone().multiply(RIG.armFix.L),Hand_L:elL.clone().multiply(RIG.armFix.L),
+    UpperArm_R:shR.clone().multiply(RIG.armFix.R),LowerArm_R:elR.clone().multiply(RIG.armFix.R),Hand_R:elR.clone().multiply(RIG.armFix.R),
+    UpperLeg_L:lgL,LowerLeg_L:knL,Foot_L:anL,UpperLeg_R:lgR,LowerLeg_R:knR,Foot_R:anR};
+  // braids hang from the head; springs swing them, and they are held a little forward/against the head turn so they stay off the shirt
+  ['L','R'].forEach((s,i)=>{const a=braidAng[i];const b1=head.clone().multiply(_Q(-lean*0.5+a.x*0.55-0.06,-Pc.hdY*0.6,a.y*0.55));
+    T['Braid1_'+s]=b1;T['Braid2_'+s]=b1.clone().multiply(_Q(a.x*0.3,0,a.y*0.3));});
+  // bone local = (parent's holder-frame rotation)^-1 · target · rest
+  const order=['Hips','Spine','Chest','Neck','Head','Shoulder_L','UpperArm_L','LowerArm_L','Hand_L','Shoulder_R','UpperArm_R','LowerArm_R','Hand_R',
+    'UpperLeg_L','LowerLeg_L','Foot_L','UpperLeg_R','LowerLeg_R','Foot_R','Braid1_L','Braid2_L','Braid1_R','Braid2_R'];
+  const W={};order.forEach(n=>{const b=B[n];if(!b)return;W[n]=T[n].clone().multiply(R[n]);
+    const p=b.parent&&W[b.parent.name]?W[b.parent.name]:(b.parent&&R[b.parent.name]?R[b.parent.name]:RIG.rootParentQ);
+    b.quaternion.copy(p.clone().invert().multiply(W[n]));});
+  // ground pass: lift/lower the whole figure so its lowest sole/knee point rests on the floor, then add the jump height
+  const H=RIG.holder;H.position.y=RIG.baseY;H.updateMatrixWorld(true);let lo=Infinity;
+  for(const i of RIG.probes){RIG.mesh.boneTransform(i,_pv.fromBufferAttribute(RIG.mesh.geometry.attributes.position,i));_pv.applyMatrix4(RIG.mesh.matrixWorld);rose.worldToLocal(_pv);if(_pv.y<lo)lo=_pv.y;}
+  H.position.y=RIG.baseY-lo+Pc.air;
+  // magnifier in the right hand
+  const hand=B.Hand_R;if(hand&&RIG.magnifier.visible){H.updateMatrixWorld(true);hand.getWorldPosition(_pv);rose.worldToLocal(_pv);
+    RIG.magnifier.position.copy(_pv).add(new THREE.Vector3(0,-0.035,0.012).applyQuaternion(elR));RIG.magnifier.quaternion.copy(elR);}
+}
 
 /* ---------- character controller: locomotion + actions + expressions ---------- */
 const ROSE_HOME=new THREE.Vector3(1.45,0.025,2.7);
@@ -730,13 +703,7 @@ function turnTo(a,k){let d=a-rose.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d
 roseReset();
 const POSE_KEYS=['air','hipY','hipRY','spX','spZ','chRY','nkX','hdX','hdY','hdZ','shLX','shLZ','shRX','shRZ','elL','elR','lgLX','lgRX','lgLZ','lgRZ','knL','knR','anL','anR'];
 const P={},Pc={};POSE_KEYS.forEach(k=>{P[k]=0;Pc[k]=0;});
-let phase=0,blinkT=2.5,blinking=0,expr='smile',exprCur={by:0,bt:0,eye:1,iy:0};
-const EXPR={smile:{m:'smile',by:0,bt:0,eye:1},happy:{m:'open',ms:0.8,by:0.004,bt:0,eye:1},laugh:{m:'open',ms:1.3,by:0.007,bt:0,eye:0,closed:true},
-  curious:{m:'smile',ms:0.7,by:0.006,bt:0.12,eye:1.05},surprised:{m:'o',by:0.014,bt:0,eye:1.14},thinking:{m:'flat',by:0.004,bt:-0.18,eye:0.95,iy:0.007},
-  excited:{m:'open',ms:1.05,by:0.01,bt:0,eye:1.08},proud:{m:'smile',ms:1.1,by:0.004,bt:0,eye:0.86}};
-function setExpr(e){if(e===expr)return;expr=e;const d=EXPR[e];Object.entries(RIG.mouth).forEach(([k,m])=>{m.visible=(k===d.m);});const m=RIG.mouth[d.m];const ms=d.ms||1;m.scale.set(ms,ms,1);
-  RIG.closed.forEach(c=>c.visible=!!d.closed);}
-setExpr('happy');setExpr('smile');
+let phase=0;
 const _v=new THREE.Vector3(),_a=new THREE.Vector3(),_rb=new THREE.Vector3();
 function poseBase(t){Object.assign(P,{air:0,hipY:0,hipRY:0,spX:0.02,spZ:0,chRY:0,nkX:0,hdX:0,hdY:0,hdZ:0,shLX:0.05,shLZ:0.13,shRX:0.05,shRZ:-0.13,elL:-0.2,elR:-0.2,lgLX:0,lgRX:0,lgLZ:0.02,lgRZ:-0.02,knL:0.04,knR:0.04,anL:-0.04,anR:-0.04});
   P.hdY+=Math.sin(t*0.7)*0.07;P.hdZ+=Math.sin(t*1.1)*0.035;P.shLX+=Math.sin(t*1.3)*0.02;P.shRX-=Math.sin(t*1.3)*0.02;}
@@ -777,29 +744,19 @@ function updateRose(dt,t){
       if(a.name==='open'){const k=Math.min(1,a.t/0.6);P.shLX=P.shRX=-1.25+k*-0.5;P.elL=P.elR=-0.35;e=a.t>0.6?'excited':'surprised';}else{P.shLX=P.shRX=-0.9;P.elL=P.elR=-0.6;e='curious';}break;}
     case'proud':P.shLZ=0.55;P.shRZ=-0.55;P.shLX=P.shRX=0.35;P.elL=P.elR=-1.7;P.hdX=-0.1;e='proud';break;
     default:e='smile';}
-  // smooth blend toward targets
+  // smooth blend toward targets, then pose the skinned model
   const k=1-Math.exp(-dt*(moving?16:9));POSE_KEYS.forEach(q=>{Pc[q]+=(P[q]-Pc[q])*k;});Pc.air=air;
-  RIG.body.position.y=Pc.air;RIG.hips.position.y=0.486+Pc.hipY;RIG.hips.rotation.y=Pc.hipRY;
-  RIG.spine.rotation.set(Pc.spX,0,Pc.spZ);RIG.chest.rotation.y=Pc.chRY;RIG.neck.rotation.x=Pc.nkX;RIG.head.rotation.set(Pc.hdX,Pc.hdY,Pc.hdZ);
-  RIG.shL.rotation.set(Pc.shLX,0,Pc.shLZ);RIG.shR.rotation.set(Pc.shRX,0,Pc.shRZ);RIG.elL.rotation.x=Pc.elL;RIG.elR.rotation.x=Pc.elR;
-  RIG.legL.rotation.set(Pc.lgLX,0,Pc.lgLZ);RIG.legR.rotation.set(Pc.lgRX,0,Pc.lgRZ);RIG.kneeL.rotation.x=Pc.knL;RIG.kneeR.rotation.x=Pc.knR;RIG.ankleL.rotation.x=Pc.anL;RIG.ankleR.rotation.x=Pc.anR;
-  RIG.torso.scale.y=1+Math.sin(t*2.4)*0.012;RIG.magnifier.visible=(!moving&&act.name==='search');
-  RIG.shadow.scale.setScalar(1-Math.min(0.5,Pc.air*2));RIG.shadow.position.y=0.031-Pc.air;
-  // expression + blink
-  setExpr(e);const d=EXPR[e];const ke=1-Math.exp(-dt*12);exprCur.by+=(d.by-exprCur.by)*ke;exprCur.bt+=(d.bt-exprCur.bt)*ke;exprCur.eye+=(d.eye-exprCur.eye)*ke;exprCur.iy+=((d.iy||0)-exprCur.iy)*ke;
-  blinkT-=dt;if(blinkT<0){blinking=0.14;blinkT=2.4+Math.random()*2.8;}if(blinking>0)blinking-=dt;
-  const eyeS=d.closed?0.05:(blinking>0?0.08:exprCur.eye);
-  RIG.eyes.forEach((g,i)=>{g.scale.set(d.closed?1:exprCur.eye,eyeS,1);RIG.irises[i].position.y=-0.001+exprCur.iy;});
-  RIG.brows.forEach((b,i)=>{const s=i?1:-1;b.position.y=0.05+exprCur.by+(e==='curious'&&i===1?0.006:0);b.rotation.z=s*exprCur.bt;});
+  RIG.magnifier.visible=(!moving&&act.name==='search'&&RIG.ready);
   // braid secondary motion (damped springs driven by the braid root's acceleration)
-  RIG.braids.forEach((b,bi)=>{b.root.getWorldPosition(_v);if(!b.init){b.p.copy(_v);b.v.set(0,0,0);b.init=true;}
+  if(RIG.ready){RIG.braids.forEach((b,bi)=>{RIG.B[b.bone].getWorldPosition(_v);if(!b.init){b.p.copy(_v);b.v.set(0,0,0);b.init=true;}
     _a.subVectors(_v,b.p).divideScalar(Math.max(dt,1e-3));const acc=_rb.copy(_a).sub(b.v).divideScalar(Math.max(dt,1e-3));b.v.copy(_a);b.p.copy(_v);
     const ry=-rose.rotation.y-Pc.hdY,cs=Math.cos(ry),sn=Math.sin(ry);const ax=acc.x*cs-acc.z*sn,az=acc.x*sn+acc.z*cs;
     const tx=THREE.MathUtils.clamp(az*0.010+acc.y*0.004,-0.6,0.6),tz=THREE.MathUtils.clamp(-ax*0.010,-0.6,0.6);
     const ns=Math.ceil(dt/0.016),h=dt/ns;for(let q=0;q<ns;q++){b.vel.x+=((tx-b.ang.x)*55-b.vel.x*7)*h;b.vel.y+=((tz-b.ang.y)*55-b.vel.y*7)*h;b.ang.x+=b.vel.x*h;b.ang.y+=b.vel.y*h;}
-    b.ang.x=THREE.MathUtils.clamp(b.ang.x,-0.7,0.7);b.ang.y=THREE.MathUtils.clamp(b.ang.y,-0.7,0.7);
-    const lean=Pc.spX+Pc.hdX; // keep braids hanging forward over the shoulders even when she bends
-    b.segs.forEach((sg,i)=>{const w=i===0?0.55:0.12;sg.rotation.x=(i===0?-0.42-lean*0.6:-0.035)+b.ang.x*w+(i===0?Math.sin(t*1.7+bi)*0.015:0);sg.rotation.z=(i===0?b.s*0.13:b.s*0.004)+b.ang.y*w;});});
+    b.ang.x=THREE.MathUtils.clamp(b.ang.x,-0.7,0.7);b.ang.y=THREE.MathUtils.clamp(b.ang.y,-0.7,0.7);});
+    applyRosePose(Pc,t,RIG.braids.map(b=>b.ang));}
+  RIG.shadow.scale.setScalar(1-Math.min(0.5,Pc.air*2));RIG.shadow.position.y=0.031;
+  void e; // the Meshy model has no separate face parts, so the expression name is not drawn
 }
 
 /* ---------- 4. treasure chest + confetti (hidden until the end) ---------- */
@@ -1357,6 +1314,7 @@ function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;const t=now
   renderer.render(scene,camera);requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+if(new URLSearchParams(location.search).has('test'))window.__dbg={rose,RIG,roseDo,roseReset,walkTo,camera,controls,flyTo,startPose,get act(){return act},poke(){lastAct=performance.now()+600000;}};
 window.__game={ITEMS,tapItem,get state(){return state},get found(){return found},get clues(){return clues},start:()=>document.getElementById('btnStart').click()};
 })();
 </script>
